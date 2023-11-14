@@ -1,0 +1,6 @@
+# ninja log v5
+1	4655	1699895118846468891	CMakeFiles/HelloWorld.dir/HelloWorld.cpp.o	3bb239dbbaafdf04
+3	8229	1699993579965058692	CMakeFiles/MemOpt.dir/MemOpt.cpp.o	6846ae2d41f6dff0
+8229	8373	1699993580111725525	libMemOpt.so	31523a2219cd9abc
+4	8054	1699993679041803000	CMakeFiles/MemOpt.dir/MemOpt.cpp.o	6846ae2d41f6dff0
+8054	8209	1699993679198469740	libMemOpt.so	31523a2219cd9abc
