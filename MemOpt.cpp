@@ -3,7 +3,10 @@
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/raw_ostream.h"
 #include <llvm/ADT/SmallVector.h>
+#include <llvm/IR/Metadata.h>
 #include <llvm/Support/Casting.h>
+
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -11,7 +14,7 @@ using namespace llvm;
 namespace {
 CallInst* findHeapAllocation(Function& func) {
 
-    errs() << "In " << func.getName() << '\n';
+    //errs() << "In " << func.getName() << '\n';
 
     for (BasicBlock& block : func) {
         for (Instruction& inst: block) {
@@ -22,7 +25,7 @@ CallInst* findHeapAllocation(Function& func) {
                 AttributeList attributes =  calledFunc->getAttributes();
                 auto isAllocFunc = attributes.hasFnAttr(Attribute::AllocSize);
 
-                errs() << calledFunc->getName() << '\n';
+                //errs() << calledFunc->getName() << '\n';
 
                 if (isAllocFunc) {
                     return callInst;
@@ -34,44 +37,65 @@ CallInst* findHeapAllocation(Function& func) {
 }
 
 
-uint64_t branchWeight(const BranchInst& branchInst) {
-    //MDNode* metaData = branchInst.getMetadata("prof");
-    MDNode* metaData = branchInst.getMetadata(LLVMContext::MD_prof);
 
-    if (branchInst.isConditional() && metaData) {
-        uint64_t weight = 0;
-        //branchInst.extractProfTotalWeight(weight);
-        //const MDOperand& wtf = metaData->getOperand(0);
-        //auto firstVal = wtf->print();
-        //auto wtf = metaData->
-        //errs() << "num of operands " << wtf  << '\n';
-        metaData->getOperand(0)->print(errs());
-        errs() << '\n';
-        metaData->getOperand(1)->print(errs());
-        errs() << '\n';
-        metaData->getOperand(2)->print(errs());
-        errs() << '\n';
-        return weight;
+struct BlockWeight {
+    BlockWeight(BasicBlock* block, int weight) 
+        :block(block), weight(weight) {}
+    BasicBlock* block;
+    int weight;
+};
+
+std::optional<std::pair<BlockWeight, BlockWeight>>
+branchWeights(const BranchInst& branchInst) {
+    int firstWeight;
+    int secondWeight;
+    MDNode* metaData = branchInst.getMetadata(LLVMContext::MD_prof);
+    if(branchInst.isConditional() and static_cast<bool>(metaData)) {
+        const ConstantAsMetadata* firstWeightMD = dyn_cast<ConstantAsMetadata>
+                                        (metaData->getOperand(1).get());
+        const ConstantAsMetadata* secondWeightMD = dyn_cast<ConstantAsMetadata>
+                                        (metaData->getOperand(2));
+
+        if (firstWeightMD and secondWeightMD) {
+            Constant* firstWeightConstant = firstWeightMD->getValue();
+            Constant* secondWeightConstant = secondWeightMD->getValue();
+
+            ConstantInt * ciFirst = dyn_cast<ConstantInt>(firstWeightConstant);
+            ConstantInt * ciSecond = dyn_cast<ConstantInt>(secondWeightConstant);
+
+            if (ciFirst and ciSecond) {
+                firstWeight = ciFirst->getSExtValue();
+                secondWeight = ciSecond->getSExtValue();
+                //return std::make_pair(firstWeight, secondWeight);
+                return std::make_pair(
+                        BlockWeight(branchInst.getSuccessor(0), firstWeight),
+                        BlockWeight(branchInst.getSuccessor(1), secondWeight));
+            }
+        }
     }
-    return 0;
+    return std::nullopt;
 }
+
+BasicBlock* findUnlikelyBlock(const BranchInst& branchInst) {
+    std::pair<BlockWeight, BlockWeight> weights = branchWeights(branchInst).value();
+    return weights.first.weight < weights.second.weight ?
+        weights.first.block : weights.second.block;
+}
+
 
 BranchInst* findWeightedBranch(Function& func) {
     for (BasicBlock& block: func) {
         for (Instruction& inst : block) {
             BranchInst* branchInst = dyn_cast<BranchInst>(&inst);
-
             // Только br инструкции
             if (branchInst) {
-                uint64_t weight = branchWeight(*branchInst);
-                if (weight >= 2000) {
-                    errs() <<  "in branch: "<< weight << '\n';
+                // только с весом
+                if (branchWeights(*branchInst)) {
                     return branchInst;
-                    //branchInst->getSuccessor(0);
-                    }
                 }
             }
         }
+    }
     return nullptr;
 }
 
@@ -93,53 +117,43 @@ bool blockAccessAllocMemory(BasicBlock* block, CallInst* alloc) {
 }
 
 
-
-
 bool needOptimization(BranchInst* weightedBranch, CallInst* alloc) {
     if (weightedBranch == nullptr or alloc == nullptr) {
         return false;
     }
-    size_t numSuccessors = weightedBranch->getNumSuccessors();
+    BasicBlock* unlikelyBlock = findUnlikelyBlock(*weightedBranch);
 
-    for (size_t i = 0; i < numSuccessors; ++i) {
-        auto currBlock = weightedBranch->getSuccessor(i);
+    if (blockAccessAllocMemory(unlikelyBlock, alloc)) {
+        return true;
     }
+
     return false;
 }
 
 
 // пройтись по всем бренчам, найти именно ту, которая является unlikely
-// и еслив ней я буду использовать память и нигде больше,
-// то тогда Transformation pass
-
-// New PM implementation
+// если в ней используется память, то тогда Transformation pass
 struct MemOpt : PassInfoMixin<MemOpt> {
-  // Main entry point, takes IR unit to run the pass on (&F) and the
-  // corresponding pass manager (to be queried if need be)
   PreservedAnalyses run(Function& func, FunctionAnalysisManager&) {
     CallInst* alloc = findHeapAllocation(func);
     BranchInst* weightedBranch = findWeightedBranch(func);
 
-
-
-    //if (blockAccessAllocMemory(weightedBranch->getSuccessor(0), alloc)) {
-    //    errs() << "УРАААА\n";
-    //}
-
+    if (needOptimization(weightedBranch, alloc)) {
+        errs() << "можно оптимизировать\n";
+    } else {
+        errs() << "нельзя оптимизировать\n";
+    }
 
 
     return PreservedAnalyses::all();
   }
 
-  // Without isRequired returning true, this pass will be skipped for functions
-  // decorated with the optnone LLVM attribute. Note that clang -O0 decorates
-  // all functions with optnone.
   static bool isRequired() { return true; }
 };
 
 } // namespace
 
-llvm::PassPluginLibraryInfo getHelloWorldPluginInfo() {
+llvm::PassPluginLibraryInfo getMemOptPluginInfo() {
   return {LLVM_PLUGIN_API_VERSION, "MemOpt", LLVM_VERSION_STRING,
           [](PassBuilder &PB) {
             PB.registerPipelineParsingCallback(
@@ -154,10 +168,7 @@ llvm::PassPluginLibraryInfo getHelloWorldPluginInfo() {
           }};
 }
 
-// This is the core interface for pass plugins. It guarantees that 'opt' will
-// be able to recognize MemOpt when added to the pass pipeline on the
-// command line, i.e. via '-passes=mem-opt'
 extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo
 llvmGetPassPluginInfo() {
-  return getHelloWorldPluginInfo();
+  return getMemOptPluginInfo();
 }
