@@ -1,2 +1,3 @@
 ./tests/add-two.c
 ./tests/IR/add-two.ll
+./old.cpp

@@ -1,15 +1,9 @@
 #include <stdlib.h>
-#include <time.h>
 
-void foo() {
-    srand(time(NULL));
+void foo(int x) {
+    int* a = (int*)malloc(sizeof(int));
 
-    int* a = malloc(sizeof(int));
-    int rand = 78432;
-    if (__builtin_expect(rand == random(), 0)) {
+    if (__builtin_expect(x == 42, 0)) {
         *a = 5;
-    } else if (__builtin_expect(rand != random(), 1)) {
-        int b = 5;
     }
-    free(a);
 }

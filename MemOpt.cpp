@@ -9,87 +9,100 @@
 
 using namespace llvm;
 namespace {
-std::vector<const CallInst*> findHeapAllocation(Function& func) {
-    std::vector<const CallInst*> allocations{};
-    errs() << "In " << func.getName() << "\n";
+CallInst* findHeapAllocation(Function& func) {
 
-    for (const BasicBlock& block : func) {
-        for (const Instruction& inst : block) {
+    errs() << "In " << func.getName() << '\n';
+
+    for (BasicBlock& block : func) {
+        for (Instruction& inst: block) {
             auto* callInst = dyn_cast<CallInst>(&inst);
+            // Только CallInst
             if (callInst) {
                 Function* calledFunc = callInst->getCalledFunction();
-
-                errs() << "    "<< calledFunc->getName() << "()" << "\n";
-                AttributeList attributes = calledFunc->getAttributes();
-                //AllocFnKind alloc_kind = attributes.getAllocKind();
-
-                //if (alloc_kind == AllocFnKind::Alloc) {
-                //        errs() << "Alloc\n";
-                //}
-
-                //switch (alloc_kind) {
-                //    case AllocFnKind::Alloc:
-                //        errs() << "Alloc\n";
-                //        break;
-                //    case AllocFnKind::Free:
-                //        errs() << "Free\n";
-                //        break;
-                //    case AllocFnKind::Zeroed:
-                //        errs() << "Zeroed\n";
-                //        break;
-                //    case AllocFnKind::Realloc:
-                //        errs() << "Realloc\n";
-                //        break;
-                //    case AllocFnKind::Aligned:
-                //        errs() << "Aligned\n";
-                //        break;
-                //    case AllocFnKind::Uninitialized:
-                //        errs() << "Uninitialized\n";
-                //        break;
-                //    case AllocFnKind::Unknown:
-                //        errs() << "Unknown\n";
-                //        break;
-                //}
-
-
+                AttributeList attributes =  calledFunc->getAttributes();
                 auto isAllocFunc = attributes.hasFnAttr(Attribute::AllocSize);
 
+                errs() << calledFunc->getName() << '\n';
+
                 if (isAllocFunc) {
-                    allocations.push_back(callInst);
+                    return callInst;
                 }
-                //errs() << (isAllocFunc? "has alloc size": "no") << '\n';
             }
         }
     }
-    return allocations;
+    return nullptr;
 }
 
 
-void branchWeights(Function& func) {
-    for (const BasicBlock& block : func) {
-        for (const Instruction& inst : block) {
-            const BranchInst* branchInst = dyn_cast<BranchInst>(&inst);
+BranchInst* findWeightedBranch(Function& func) {
+    for (BasicBlock& block: func) {
+        for (Instruction& inst : block) {
+            BranchInst* branchInst = dyn_cast<BranchInst>(&inst);
+
+            // Только br инструкции
             if (branchInst) {
-                //SmallVectorImpl<std::pair<uint32_t, MDNode*>> MDs;
-                errs() << "in branch\n";
-                MDNode* metaData = branchInst->getMetadata("branch_weights");
-                if (metaData) {
-                    errs() << "branch_weights\n";
+                MDNode* metaData = branchInst->getMetadata("prof");
+
+                // Только br иструкции, которые потенциально могут быть с весом
+                if (branchInst->isConditional() && metaData) {
+                    uint64_t branchWeight = 0;
+                    branchInst->extractProfTotalWeight(branchWeight);
+                    if (branchWeight >= 2000) {
+                        return branchInst;
+                        //branchInst->getSuccessor(0);
+                    }
                 }
             }
         }
     }
+    return nullptr;
 }
 
 
+bool blockAccessAllocMemory(BasicBlock* block, CallInst* alloc) {
+    if (block == nullptr or alloc == nullptr) {
+        return false;
+    }
+    //auto allocatedValue = alloc->getValueID();
+    for (const Instruction& inst : *block) {
+        for (size_t i = 0; i < inst.getNumOperands(); ++i) {
+            const Value* operandValue = inst.getOperand(i);
+
+            if (operandValue == alloc) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+
+bool needOptimization(BranchInst* weightedBranch, CallInst* alloc) {
+
+}
+
+
+// пройтись по всем бренчам, найти именно ту, которая является unlikely
+// и еслив ней я буду использовать память и нигде больше, 
+// то тогда Transformation pass
 
 // New PM implementation
 struct MemOpt : PassInfoMixin<MemOpt> {
   // Main entry point, takes IR unit to run the pass on (&F) and the
   // corresponding pass manager (to be queried if need be)
   PreservedAnalyses run(Function& func, FunctionAnalysisManager&) {
-    findHeapAllocation(func);
-    branchWeights(func);
+    CallInst* alloc = findHeapAllocation(func);
+    BranchInst* weightedBranch = findWeightedBranch(func);
+
+
+
+    if (blockAccessAllocMemory(weightedBranch->getSuccessor(0), alloc)) {
+        errs() << "УРАААА\n";
+    }
+
+
+
     return PreservedAnalyses::all();
   }
 
