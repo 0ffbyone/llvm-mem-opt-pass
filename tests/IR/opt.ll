@@ -6,20 +6,39 @@ target triple = "x86_64-pc-linux-gnu"
 ; Function Attrs: nounwind sspstrong uwtable
 define dso_local i32 @foo(i32 noundef %0) local_unnamed_addr #0 {
   %2 = tail call noalias dereferenceable_or_null(1024) ptr @malloc(i64 noundef 1024) #3
-  %3 = icmp eq i32 %0, 42
-  br i1 %3, label %4, label %5, !prof !5
+  switch i32 %0, label %6 [
+    i32 0, label %3
+    i32 100, label %4
+    i32 42, label %5
+  ], !prof !5
+
+3:                                                ; preds = %1
+  tail call void (...) @func() #4
+  br label %6
 
 4:                                                ; preds = %1
-  tail call void @bar(ptr noundef %2) #4
-  br label %5
+  tail call void (...) @foo_bar() #4
+  br label %6
 
-5:                                                ; preds = %1, %4
-  %6 = phi i32 [ 1, %4 ], [ 0, %1 ]
-  ret i32 %6
+5:                                                ; preds = %1
+  tail call void @bar(ptr noundef %2) #4
+  br label %7
+
+6:                                                ; preds = %4, %3, %1
+  tail call void (...) @func() #4
+  br label %7
+
+7:                                                ; preds = %6, %5
+  %8 = phi i32 [ 1, %5 ], [ 0, %6 ]
+  ret i32 %8
 }
 
 ; Function Attrs: mustprogress nofree nounwind willreturn allockind("alloc,uninitialized") allocsize(0) memory(inaccessiblemem: readwrite)
 declare noalias noundef ptr @malloc(i64 noundef) local_unnamed_addr #1
+
+declare void @func(...) local_unnamed_addr #2
+
+declare void @foo_bar(...) local_unnamed_addr #2
 
 declare void @bar(ptr noundef) local_unnamed_addr #2
 
@@ -37,4 +56,4 @@ attributes #4 = { nounwind }
 !2 = !{i32 7, !"PIE Level", i32 2}
 !3 = !{i32 7, !"uwtable", i32 2}
 !4 = !{!"clang version 16.0.6"}
-!5 = !{!"branch_weights", i32 1, i32 2000}
+!5 = !{!"branch_weights", i32 2000000, i32 -290966296, i32 1000, i32 1000}

@@ -33,7 +33,14 @@ endif()
 #===============================================================================
 # 3. ADD THE TARGET
 #===============================================================================
-add_library(MemOpt SHARED MemOpt.cpp)
+set(SOURCE_DIR "src")
+#add_subdirectory("src")
+#file(GLOB SOURCES "${SOURCE_DIR}/*.cpp")
+
+add_library(MemOpt SHARED
+            "${SOURCE_DIR}/Pass.cpp"
+            "${SOURCE_DIR}/MemOpt.cpp"
+            )
 
 # Allow undefined symbols in shared objects on Darwin (this is the default
 # behaviour on Linux)

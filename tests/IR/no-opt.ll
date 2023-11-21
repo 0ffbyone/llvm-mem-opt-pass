@@ -6,14 +6,20 @@ target triple = "x86_64-pc-linux-gnu"
 ; Function Attrs: nounwind sspstrong uwtable
 define dso_local i32 @foo(i32 noundef %0) local_unnamed_addr #0 {
   %2 = tail call noalias dereferenceable_or_null(1024) ptr @malloc(i64 noundef 1024) #3
-  %3 = icmp eq i32 %0, 42
-  br i1 %3, label %4, label %5, !prof !5
+  switch i32 %0, label %5 [
+    i32 50, label %3
+    i32 0, label %4
+  ], !prof !5
+
+3:                                                ; preds = %1
+  tail call void (...) @func() #4
+  br label %5
 
 4:                                                ; preds = %1
   tail call void @bar(ptr noundef %2) #4
   br label %6
 
-5:                                                ; preds = %1
+5:                                                ; preds = %3, %1
   tail call void (...) @func() #4
   br label %6
 
@@ -25,9 +31,9 @@ define dso_local i32 @foo(i32 noundef %0) local_unnamed_addr #0 {
 ; Function Attrs: mustprogress nofree nounwind willreturn allockind("alloc,uninitialized") allocsize(0) memory(inaccessiblemem: readwrite)
 declare noalias noundef ptr @malloc(i64 noundef) local_unnamed_addr #1
 
-declare void @bar(ptr noundef) local_unnamed_addr #2
-
 declare void @func(...) local_unnamed_addr #2
+
+declare void @bar(ptr noundef) local_unnamed_addr #2
 
 attributes #0 = { nounwind sspstrong uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { mustprogress nofree nounwind willreturn allockind("alloc,uninitialized") allocsize(0) memory(inaccessiblemem: readwrite) "alloc-family"="malloc" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -43,4 +49,4 @@ attributes #4 = { nounwind }
 !2 = !{i32 7, !"PIE Level", i32 2}
 !3 = !{i32 7, !"uwtable", i32 2}
 !4 = !{!"clang version 16.0.6"}
-!5 = !{!"branch_weights", i32 2000, i32 1}
+!5 = !{!"branch_weights", i32 2000, i32 2001, i32 4000000}

@@ -25,7 +25,7 @@ CMAKE_AR:FILEPATH=/usr/bin/ar
 CMAKE_BUILD_TYPE:STRING=
 
 //CXX compiler
-CMAKE_CXX_COMPILER:FILEPATH=/usr/bin/c++
+CMAKE_CXX_COMPILER:STRING=/usr/bin/c++
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
@@ -53,7 +53,7 @@ CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 CMAKE_CXX_STANDARD:STRING=17
 
 //C compiler
-CMAKE_C_COMPILER:FILEPATH=/usr/bin/cc
+CMAKE_C_COMPILER:STRING=/usr/bin/cc
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
@@ -299,7 +299,7 @@ CMAKE_CACHE_MAJOR_VERSION:INTERNAL=3
 //Minor version of cmake used to create the current loaded cache
 CMAKE_CACHE_MINOR_VERSION:INTERNAL=27
 //Patch version of cmake used to create the current loaded cache
-CMAKE_CACHE_PATCH_VERSION:INTERNAL=7
+CMAKE_CACHE_PATCH_VERSION:INTERNAL=8
 //Path to CMake executable.
 CMAKE_COMMAND:INTERNAL=/usr/bin/cmake
 //Path to cpack program executable.
@@ -443,7 +443,7 @@ FFI_LIBRARIES-ADVANCED:INTERNAL=1
 //Details about finding FFI
 FIND_PACKAGE_MESSAGE_DETAILS_FFI:INTERNAL=[/usr/lib/libffi.so][1][v()]
 //Details about finding LibXml2
-FIND_PACKAGE_MESSAGE_DETAILS_LibXml2:INTERNAL=[/usr/lib/libxml2.so][/usr/include/libxml2][v2.11.5()]
+FIND_PACKAGE_MESSAGE_DETAILS_LibXml2:INTERNAL=[/usr/lib/libxml2.so][/usr/include/libxml2][v2.12.0()]
 //Details about finding Terminfo
 FIND_PACKAGE_MESSAGE_DETAILS_Terminfo:INTERNAL=[/usr/lib/libtinfo.so][1][v()]
 //Details about finding ZLIB

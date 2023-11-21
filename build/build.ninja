@@ -68,13 +68,21 @@ build RISCVTargetParserTableGen: phony
 
 build cmake_object_order_depends_target_MemOpt: phony || CMakeFiles/MemOpt.dir
 
-build CMakeFiles/MemOpt.dir/MemOpt.cpp.o: CXX_COMPILER__MemOpt_unscanned_ /home/anton/dev/cpp/my-llvm-pass/MemOpt.cpp || cmake_object_order_depends_target_MemOpt
+build CMakeFiles/MemOpt.dir/src/Pass.cpp.o: CXX_COMPILER__MemOpt_unscanned_ /home/anton/dev/cpp/my-llvm-pass/src/Pass.cpp || cmake_object_order_depends_target_MemOpt
   DEFINES = -DMemOpt_EXPORTS
-  DEP_FILE = CMakeFiles/MemOpt.dir/MemOpt.cpp.o.d
+  DEP_FILE = CMakeFiles/MemOpt.dir/src/Pass.cpp.o.d
   FLAGS = -std=gnu++17 -fPIC
   INCLUDES = -isystem //include
   OBJECT_DIR = CMakeFiles/MemOpt.dir
-  OBJECT_FILE_DIR = CMakeFiles/MemOpt.dir
+  OBJECT_FILE_DIR = CMakeFiles/MemOpt.dir/src
+
+build CMakeFiles/MemOpt.dir/src/MemOpt.cpp.o: CXX_COMPILER__MemOpt_unscanned_ /home/anton/dev/cpp/my-llvm-pass/src/MemOpt.cpp || cmake_object_order_depends_target_MemOpt
+  DEFINES = -DMemOpt_EXPORTS
+  DEP_FILE = CMakeFiles/MemOpt.dir/src/MemOpt.cpp.o.d
+  FLAGS = -std=gnu++17 -fPIC
+  INCLUDES = -isystem //include
+  OBJECT_DIR = CMakeFiles/MemOpt.dir
+  OBJECT_FILE_DIR = CMakeFiles/MemOpt.dir/src
 
 
 # =============================================================================
@@ -84,7 +92,7 @@ build CMakeFiles/MemOpt.dir/MemOpt.cpp.o: CXX_COMPILER__MemOpt_unscanned_ /home/
 #############################################
 # Link the shared library libMemOpt.so
 
-build libMemOpt.so: CXX_SHARED_LIBRARY_LINKER__MemOpt_ CMakeFiles/MemOpt.dir/MemOpt.cpp.o
+build libMemOpt.so: CXX_SHARED_LIBRARY_LINKER__MemOpt_ CMakeFiles/MemOpt.dir/src/Pass.cpp.o CMakeFiles/MemOpt.dir/src/MemOpt.cpp.o
   OBJECT_DIR = CMakeFiles/MemOpt.dir
   POST_BUILD = :
   PRE_LINK = :
@@ -139,14 +147,14 @@ build all: phony libMemOpt.so
 #############################################
 # Re-run CMake if any of its inputs changed.
 
-build build.ninja: RERUN_CMAKE | //lib/cmake/llvm/LLVM-Config.cmake //lib/cmake/llvm/LLVMExports-release.cmake //lib/cmake/llvm/LLVMExports.cmake /home/anton/dev/cpp/my-llvm-pass/CMakeLists.txt /lib/cmake/llvm/FindFFI.cmake /lib/cmake/llvm/FindTerminfo.cmake /lib/cmake/llvm/Findzstd.cmake /lib/cmake/llvm/LLVMConfig.cmake /lib/cmake/llvm/LLVMConfigVersion.cmake /usr/share/cmake/Modules/CMakeCInformation.cmake /usr/share/cmake/Modules/CMakeCXXInformation.cmake /usr/share/cmake/Modules/CMakeCommonLanguageInclude.cmake /usr/share/cmake/Modules/CMakeGenericSystem.cmake /usr/share/cmake/Modules/CMakeInitializeConfigs.cmake /usr/share/cmake/Modules/CMakeLanguageInformation.cmake /usr/share/cmake/Modules/CMakePushCheckState.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake /usr/share/cmake/Modules/CheckCSourceCompiles.cmake /usr/share/cmake/Modules/Compiler/CMakeCommonCompilerMacros.cmake /usr/share/cmake/Modules/Compiler/GNU-C.cmake /usr/share/cmake/Modules/Compiler/GNU-CXX.cmake /usr/share/cmake/Modules/Compiler/GNU.cmake /usr/share/cmake/Modules/FindLibXml2.cmake /usr/share/cmake/Modules/FindPackageHandleStandardArgs.cmake /usr/share/cmake/Modules/FindPackageMessage.cmake /usr/share/cmake/Modules/FindPkgConfig.cmake /usr/share/cmake/Modules/FindZLIB.cmake /usr/share/cmake/Modules/Internal/CheckSourceCompiles.cmake /usr/share/cmake/Modules/Platform/Linux-GNU-C.cmake /usr/share/cmake/Modules/Platform/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-Initialize.cmake /usr/share/cmake/Modules/Platform/Linux.cmake /usr/share/cmake/Modules/Platform/UnixPaths.cmake /usr/share/cmake/Modules/SelectLibraryConfigurations.cmake CMakeCache.txt CMakeFiles/3.27.7/CMakeCCompiler.cmake CMakeFiles/3.27.7/CMakeCXXCompiler.cmake CMakeFiles/3.27.7/CMakeSystem.cmake
+build build.ninja: RERUN_CMAKE | //lib/cmake/llvm/LLVM-Config.cmake //lib/cmake/llvm/LLVMExports-release.cmake //lib/cmake/llvm/LLVMExports.cmake /home/anton/dev/cpp/my-llvm-pass/CMakeLists.txt /lib/cmake/llvm/FindFFI.cmake /lib/cmake/llvm/FindTerminfo.cmake /lib/cmake/llvm/Findzstd.cmake /lib/cmake/llvm/LLVMConfig.cmake /lib/cmake/llvm/LLVMConfigVersion.cmake /usr/share/cmake/Modules/CMakeCInformation.cmake /usr/share/cmake/Modules/CMakeCXXInformation.cmake /usr/share/cmake/Modules/CMakeCommonLanguageInclude.cmake /usr/share/cmake/Modules/CMakeGenericSystem.cmake /usr/share/cmake/Modules/CMakeInitializeConfigs.cmake /usr/share/cmake/Modules/CMakeLanguageInformation.cmake /usr/share/cmake/Modules/CMakePushCheckState.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake /usr/share/cmake/Modules/CheckCSourceCompiles.cmake /usr/share/cmake/Modules/Compiler/CMakeCommonCompilerMacros.cmake /usr/share/cmake/Modules/Compiler/GNU-C.cmake /usr/share/cmake/Modules/Compiler/GNU-CXX.cmake /usr/share/cmake/Modules/Compiler/GNU.cmake /usr/share/cmake/Modules/FindLibXml2.cmake /usr/share/cmake/Modules/FindPackageHandleStandardArgs.cmake /usr/share/cmake/Modules/FindPackageMessage.cmake /usr/share/cmake/Modules/FindPkgConfig.cmake /usr/share/cmake/Modules/FindZLIB.cmake /usr/share/cmake/Modules/Internal/CheckSourceCompiles.cmake /usr/share/cmake/Modules/Platform/Linux-GNU-C.cmake /usr/share/cmake/Modules/Platform/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-Initialize.cmake /usr/share/cmake/Modules/Platform/Linux.cmake /usr/share/cmake/Modules/Platform/UnixPaths.cmake /usr/share/cmake/Modules/SelectLibraryConfigurations.cmake CMakeCache.txt CMakeFiles/3.27.8/CMakeCCompiler.cmake CMakeFiles/3.27.8/CMakeCXXCompiler.cmake CMakeFiles/3.27.8/CMakeSystem.cmake
   pool = console
 
 
 #############################################
 # A missing CMake input file is not an error.
 
-build //lib/cmake/llvm/LLVM-Config.cmake //lib/cmake/llvm/LLVMExports-release.cmake //lib/cmake/llvm/LLVMExports.cmake /home/anton/dev/cpp/my-llvm-pass/CMakeLists.txt /lib/cmake/llvm/FindFFI.cmake /lib/cmake/llvm/FindTerminfo.cmake /lib/cmake/llvm/Findzstd.cmake /lib/cmake/llvm/LLVMConfig.cmake /lib/cmake/llvm/LLVMConfigVersion.cmake /usr/share/cmake/Modules/CMakeCInformation.cmake /usr/share/cmake/Modules/CMakeCXXInformation.cmake /usr/share/cmake/Modules/CMakeCommonLanguageInclude.cmake /usr/share/cmake/Modules/CMakeGenericSystem.cmake /usr/share/cmake/Modules/CMakeInitializeConfigs.cmake /usr/share/cmake/Modules/CMakeLanguageInformation.cmake /usr/share/cmake/Modules/CMakePushCheckState.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake /usr/share/cmake/Modules/CheckCSourceCompiles.cmake /usr/share/cmake/Modules/Compiler/CMakeCommonCompilerMacros.cmake /usr/share/cmake/Modules/Compiler/GNU-C.cmake /usr/share/cmake/Modules/Compiler/GNU-CXX.cmake /usr/share/cmake/Modules/Compiler/GNU.cmake /usr/share/cmake/Modules/FindLibXml2.cmake /usr/share/cmake/Modules/FindPackageHandleStandardArgs.cmake /usr/share/cmake/Modules/FindPackageMessage.cmake /usr/share/cmake/Modules/FindPkgConfig.cmake /usr/share/cmake/Modules/FindZLIB.cmake /usr/share/cmake/Modules/Internal/CheckSourceCompiles.cmake /usr/share/cmake/Modules/Platform/Linux-GNU-C.cmake /usr/share/cmake/Modules/Platform/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-Initialize.cmake /usr/share/cmake/Modules/Platform/Linux.cmake /usr/share/cmake/Modules/Platform/UnixPaths.cmake /usr/share/cmake/Modules/SelectLibraryConfigurations.cmake CMakeCache.txt CMakeFiles/3.27.7/CMakeCCompiler.cmake CMakeFiles/3.27.7/CMakeCXXCompiler.cmake CMakeFiles/3.27.7/CMakeSystem.cmake: phony
+build //lib/cmake/llvm/LLVM-Config.cmake //lib/cmake/llvm/LLVMExports-release.cmake //lib/cmake/llvm/LLVMExports.cmake /home/anton/dev/cpp/my-llvm-pass/CMakeLists.txt /lib/cmake/llvm/FindFFI.cmake /lib/cmake/llvm/FindTerminfo.cmake /lib/cmake/llvm/Findzstd.cmake /lib/cmake/llvm/LLVMConfig.cmake /lib/cmake/llvm/LLVMConfigVersion.cmake /usr/share/cmake/Modules/CMakeCInformation.cmake /usr/share/cmake/Modules/CMakeCXXInformation.cmake /usr/share/cmake/Modules/CMakeCommonLanguageInclude.cmake /usr/share/cmake/Modules/CMakeGenericSystem.cmake /usr/share/cmake/Modules/CMakeInitializeConfigs.cmake /usr/share/cmake/Modules/CMakeLanguageInformation.cmake /usr/share/cmake/Modules/CMakePushCheckState.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake /usr/share/cmake/Modules/CheckCSourceCompiles.cmake /usr/share/cmake/Modules/Compiler/CMakeCommonCompilerMacros.cmake /usr/share/cmake/Modules/Compiler/GNU-C.cmake /usr/share/cmake/Modules/Compiler/GNU-CXX.cmake /usr/share/cmake/Modules/Compiler/GNU.cmake /usr/share/cmake/Modules/FindLibXml2.cmake /usr/share/cmake/Modules/FindPackageHandleStandardArgs.cmake /usr/share/cmake/Modules/FindPackageMessage.cmake /usr/share/cmake/Modules/FindPkgConfig.cmake /usr/share/cmake/Modules/FindZLIB.cmake /usr/share/cmake/Modules/Internal/CheckSourceCompiles.cmake /usr/share/cmake/Modules/Platform/Linux-GNU-C.cmake /usr/share/cmake/Modules/Platform/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-Initialize.cmake /usr/share/cmake/Modules/Platform/Linux.cmake /usr/share/cmake/Modules/Platform/UnixPaths.cmake /usr/share/cmake/Modules/SelectLibraryConfigurations.cmake CMakeCache.txt CMakeFiles/3.27.8/CMakeCCompiler.cmake CMakeFiles/3.27.8/CMakeCXXCompiler.cmake CMakeFiles/3.27.8/CMakeSystem.cmake: phony
 
 
 #############################################
