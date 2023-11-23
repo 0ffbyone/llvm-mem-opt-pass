@@ -17,6 +17,6 @@ declare noalias noundef ptr @my_malloc(i64 noundef) #1
 
 declare void @bar(ptr noundef) local_unnamed_addr
 
-attributes #1 = { allockind("alloc,uninitialized") }
+attributes #1 = { allocsize(0) allockind("alloc,uninitialized") }
 
 !1 = !{!"branch_weights", i32 1, i32 2000}

@@ -6,16 +6,25 @@
 extern void bar(void*);
 extern void func();
 extern void foo_bar();
+extern void f();
 
-int foo(int x) {
+
+int foo(int x, int y) {
     void *a = malloc(1024);
 
-    if (UNLIKELY(x == 42)) {
+
+    if (UNLIKELY(x == 50)) {
         bar(a);
-        return 1;
-    } else {
+    } else if (UNLIKELY(x == 42)) {
+        foo_bar();
+    }
+
+    if (UNLIKELY(y == 50)) {
+        bar(a);
+    } else if (UNLIKELY(y == 42)) {
         func();
     }
 
     return 0;
 }
+

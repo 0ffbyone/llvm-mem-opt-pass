@@ -5,6 +5,7 @@
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/IR/Metadata.h>
 #include <llvm/Support/Casting.h>
+
 #include <variant>
 
 #include "MemOpt.h"
@@ -12,26 +13,28 @@
 using namespace llvm;
 
 namespace {
-// пройтись по всем бренчам, найти именно ту, которая является unlikely
-// если в ней используется память, то тогда Transformation pass
 struct MemOpt : PassInfoMixin<MemOpt> {
   PreservedAnalyses run(Function& func, FunctionAnalysisManager&) {
     CallInst* alloc = memopt::findHeapAllocation(func);
     std::vector<std::variant<BranchInst*, SwitchInst*>>
         weightedBranch = memopt::findWeightedBranches(func);
-    errs() << weightedBranch.size() << '\n';
 
-
+    BasicBlock* needOptBlock;
     bool canBeOptimized = false;
     for (const std::variant<BranchInst*, SwitchInst*>& branch : weightedBranch) {
-        //errs() << (memopt::needOptimization(branch, alloc)? "yes": "no") << '\n';
-        bool needOpt = std::visit([alloc](auto&& arg)
-                { return memopt::needOptimization(arg, alloc);}, branch);
-        canBeOptimized += needOpt;
+        needOptBlock = std::visit([&](auto&& arg)
+                { return memopt::needOptimization(func, arg, alloc); }, branch);
+        if (needOptBlock) {
+            canBeOptimized += true;
+        }
     }
 
     errs() << (canBeOptimized? "можно оптимизировать\n": "нельзя оптимизировать\n");
 
+    if (canBeOptimized) {
+        memopt::moveAllocInsideWeightedBlock(alloc, *needOptBlock);
+        return PreservedAnalyses::none();
+    }
 
     return PreservedAnalyses::all();
   }

@@ -9,12 +9,14 @@ extern void func();
 int foo(int x) {
     void *a = malloc(1024);
 
-    if (UNLIKELY(x == 42)) {
-        bar(a);
-    }
 
-    func();
-    bar(a);
+    if (UNLIKELY(x == 50)) {
+        bar(a);
+    } else if (UNLIKELY(x == 42)) {
+        bar(a);
+    } else {
+        func();
+    }
 
     return 0;
 }
