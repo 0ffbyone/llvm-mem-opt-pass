@@ -53,6 +53,43 @@ llvm pass для оптимизации вызовов функций-аллок
 если он был оптимизирован, то IR с одноименным названием в `tests/IR` в `tests/IROptimized`
 будет изменен, если же IR не был оптимизирован, то в этих двух местах IR будет совпадать.
 
+В качестве примера оптимизация `main-test-two.ll`
+
+Было
+```llvm
+define dso_local i32 @foo(i32 noundef %0) local_unnamed_addr #0 {
+  %2 = tail call noalias dereferenceable_or_null(1024) ptr @malloc(i64 noundef 1024) #3
+  %3 = icmp eq i32 %0, 42
+  br i1 %3, label %4, label %5, !prof !5
+
+4:                                                ; preds = %1
+  tail call void @bar(ptr noundef %2) #4
+  br label %5
+
+5:                                                ; preds = %1, %4
+  %6 = phi i32 [ 1, %4 ], [ 0, %1 ]
+  ret i32 %6
+}
+
+```
+
+Стало
+```llvm
+define dso_local i32 @foo(i32 noundef %0) local_unnamed_addr #0 {
+  %2 = icmp eq i32 %0, 42
+  br i1 %2, label %3, label %5, !prof !5
+
+3:                                                ; preds = %1
+  %4 = tail call noalias dereferenceable_or_null(1024) ptr @malloc(i64 noundef 1024) #3
+  tail call void @bar(ptr noundef %4) #4
+  br label %5
+
+5:                                                ; preds = %3, %1
+  %6 = phi i32 [ 1, %3 ], [ 0, %1 ]
+  ret i32 %6
+}
+
+```
 
 
 

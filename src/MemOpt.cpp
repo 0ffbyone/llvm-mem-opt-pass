@@ -200,25 +200,8 @@ needOptimization(Function& func, SwitchInst* weightedSwitch, CallInst* alloc) {
         } else if (not currBlockIsUnlikely and accessingAllocMemoryInBlock) {
             return nullptr;
         }
-
-
-        //if (&currBlock == unlikelyBlocks[i] and not inUse and
-        //        accessingAllocMemoryInBlock) {
-        //    inUse = true;
-        //    blockForOptimization = &currBlock;
-        //    ++i;
-        //} else if (&currBlock == unlikelyBlocks[i] and not inUse
-        //        and not accessingAllocMemoryInBlock) {
-        //    ++i;
-        //} else if (&currBlock == unlikelyBlocks[i] and inUse and
-        //        accessingAllocMemoryInBlock) {
-        //    return nullptr;
-
-        //} else if (&currBlock != unlikelyBlocks[i] and
-        //        accessingAllocMemoryInBlock) {
-        //    return nullptr;
-        //}
     }
+
     return blockForOptimization;
 }
 
