@@ -21,6 +21,7 @@ using namespace llvm;
 
 namespace memopt {
 CallInst* findHeapAllocation(Function &func);
+std::vector<CallInst*> findHeapAllocations(Function &func);
 
 struct BlockWeight {
   BlockWeight(){};

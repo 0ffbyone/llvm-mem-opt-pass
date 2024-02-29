@@ -20,6 +20,27 @@
 
 using namespace llvm;
 namespace memopt {
+std::vector<CallInst*> findHeapAllocations(Function& func) {
+    std::vector<CallInst*> allocs;
+    for (BasicBlock& block : func) {
+        for (Instruction& inst: block) {
+            auto* callInst = dyn_cast<CallInst>(&inst);
+            if (callInst) {
+                Function* calledFunc = callInst->getCalledFunction();
+                AttributeList attributes =  calledFunc->getAttributes();
+                auto isAllocFunc = attributes.hasFnAttr(Attribute::AllocSize);
+                if (isAllocFunc) {
+                    allocs.push_back(callInst);
+                }
+            }
+        }
+    }
+
+    return allocs;
+}
+
+
+
 CallInst* findHeapAllocation(Function& func) {
     for (BasicBlock& block : func) {
         for (Instruction& inst: block) {
