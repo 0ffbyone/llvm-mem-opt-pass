@@ -177,12 +177,12 @@ std::vector<BasicBlock*> findUnlikelyBlock(SwitchInst& switchInst) {
 
 BasicBlock*
 needOptimization(Function& func, BranchInst* weightedBranch, CallInst* alloc) {
-    BasicBlock* unlikelyBlock = findUnlikelyBlock(*weightedBranch);
     BasicBlock* blockForOptimization = nullptr;
 
     if (weightedBranch == nullptr or alloc == nullptr) {
         return nullptr;
     }
+    BasicBlock* unlikelyBlock = findUnlikelyBlock(*weightedBranch);
 
     //bool beenAccessed = false;
     for (const auto& user : alloc->users()) {
