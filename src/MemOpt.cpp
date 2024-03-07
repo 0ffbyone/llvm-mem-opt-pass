@@ -175,6 +175,8 @@ std::vector<BasicBlock*> findUnlikelyBlock(SwitchInst& switchInst) {
 }
 
 
+
+
 BasicBlock*
 needOptimization(Function& func, BranchInst* weightedBranch, CallInst* alloc) {
     BasicBlock* blockForOptimization = nullptr;
@@ -241,12 +243,15 @@ needOptimization(Function& func, SwitchInst* weightedSwitch, CallInst* alloc) {
 
         // по идее всегда
         auto* parent = inst->getParent();
-        bool parentIsUnlikelyBlock = false;
-        if (std::is_sorted(unlikelyBlocks.cbegin(), unlikelyBlocks.cend())) {
-            //errs() << "sorted\n";
-            parentIsUnlikelyBlock = std::binary_search(
-                    unlikelyBlocks.cbegin(), unlikelyBlocks.cend(), parent);
-        }
+        bool parentIsUnlikelyBlock = std::find(
+                unlikelyBlocks.cbegin(), unlikelyBlocks.cend(), parent)
+            != unlikelyBlocks.cend();
+
+        //if (std::is_sorted(unlikelyBlocks.cbegin(), unlikelyBlocks.cend())) {
+        //    //errs() << "sorted\n";
+        //    parentIsUnlikelyBlock = std::binary_search(
+        //            unlikelyBlocks.cbegin(), unlikelyBlocks.cend(), parent);
+        //}
         if (parentIsUnlikelyBlock and not blockForOptimization) {
             //errs() << "user inst " << *inst << '\n';
             //errs() << "basicBlock " << *(inst->getParent()) << '\n';
