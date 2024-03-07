@@ -23,8 +23,6 @@ struct MemOpt : PassInfoMixin<MemOpt> {
     std::vector<CallInst*> allocs = memopt::findHeapAllocations(func);
     // NEW
 
-
-
     std::vector<std::variant<BranchInst*, SwitchInst*>>
         weightedBranch = memopt::findWeightedBranches(func);
 
@@ -34,8 +32,6 @@ struct MemOpt : PassInfoMixin<MemOpt> {
     //NEW
     std::vector<std::pair<CallInst*, BasicBlock*>> canBeOptimizedVec;
     //NEW
-
-
 
     for (const auto& alloc : allocs) {
         for (const std::variant<BranchInst*, SwitchInst*>& branch : weightedBranch) {
@@ -47,6 +43,10 @@ struct MemOpt : PassInfoMixin<MemOpt> {
                 //NEW
                 auto pair = std::make_pair(alloc, needOptBlock);
                 canBeOptimizedVec.push_back(pair);
+
+                //errs() << "alloc " << *alloc << '\n';
+                //errs() << "needOptBlock " << *needOptBlock << '\n';
+
                 //NEW
             }
         }
@@ -65,6 +65,7 @@ struct MemOpt : PassInfoMixin<MemOpt> {
         return PreservedAnalyses::none();
     }*/
     if (canBeOptimizedVec.size() > 0) {
+        errs() << canBeOptimizedVec.size() << '\n';
         return PreservedAnalyses::none();
     }
 

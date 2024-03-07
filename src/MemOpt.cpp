@@ -2,6 +2,7 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/raw_ostream.h"
+#include <llvm/ADT/STLExtras.h>
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Metadata.h>
@@ -11,6 +12,7 @@
 #include <algorithm>
 #include <exception>
 #include <stdexcept>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -175,22 +177,45 @@ std::vector<BasicBlock*> findUnlikelyBlock(SwitchInst& switchInst) {
 
 BasicBlock*
 needOptimization(Function& func, BranchInst* weightedBranch, CallInst* alloc) {
+    BasicBlock* unlikelyBlock = findUnlikelyBlock(*weightedBranch);
     BasicBlock* blockForOptimization = nullptr;
+
     if (weightedBranch == nullptr or alloc == nullptr) {
         return nullptr;
     }
-    BasicBlock* unlikelyBlock = findUnlikelyBlock(*weightedBranch);
 
-    for (BasicBlock& currBlock : func) {
-        bool accessingAllocMemoryInBlock = blockAccessAllocMemory(&currBlock, alloc);
-        if (&currBlock == unlikelyBlock and
-            accessingAllocMemoryInBlock) {
-            blockForOptimization = &currBlock;
-        } else if (&currBlock != unlikelyBlock and
-                accessingAllocMemoryInBlock) {
+    //bool beenAccessed = false;
+    for (const auto& user : alloc->users()) {
+        auto* inst = dyn_cast<Instruction>(user);
+        if (not inst) {
+            continue;
+        }
+        auto* parent = inst->getParent();
+        if (unlikelyBlock == parent and not blockForOptimization) {
+            //errs() << "user inst " << *inst << '\n';
+            //errs() << "basicBlock " << *(inst->getParent()) << '\n';
+            blockForOptimization = parent;
+        } else {
             return nullptr;
         }
     }
+
+
+    //if (weightedBranch == nullptr or alloc == nullptr) {
+    //    return nullptr;
+    //}
+    // If there exist one and only one BB such that
+    // in said block we are accessing allocated memory
+    //for (BasicBlock& currBlock : func) {
+    //    bool accessingAllocMemoryInBlock = blockAccessAllocMemory(&currBlock, alloc);
+    //    if (&currBlock == unlikelyBlock and
+    //        accessingAllocMemoryInBlock) {
+    //        blockForOptimization = &currBlock;
+    //    } else if (&currBlock != unlikelyBlock and
+    //            accessingAllocMemoryInBlock) {
+    //        return nullptr;
+    //    }
+    //}
 
     return blockForOptimization;
 }
@@ -202,26 +227,53 @@ needOptimization(Function& func, SwitchInst* weightedSwitch, CallInst* alloc) {
     if (weightedSwitch == nullptr or alloc == nullptr) {
         return nullptr;
     }
+
     std::vector<BasicBlock*> unlikelyBlocks = findUnlikelyBlock(*weightedSwitch);
+    if (unlikelyBlocks.size() == 0) {
+        return nullptr;
+    }
 
-    bool inUse = false;
-    size_t i = 0;
-    for (BasicBlock& currBlock : func) {
-        bool accessingAllocMemoryInBlock = blockAccessAllocMemory(&currBlock, alloc);
-        bool currBlockIsUnlikely = (&currBlock == unlikelyBlocks[i]);
+    for (const auto& user : alloc->users()) {
+        auto* inst = dyn_cast<Instruction>(user);
+        if (not inst) {
+            continue;
+        }
 
-        if (currBlockIsUnlikely and not inUse) {
-            if (accessingAllocMemoryInBlock) {
-                inUse = true;
-                blockForOptimization = &currBlock;
-            }
-            ++i;
-        } else if (currBlockIsUnlikely and inUse and accessingAllocMemoryInBlock) {
-            return nullptr;
-        } else if (not currBlockIsUnlikely and accessingAllocMemoryInBlock) {
+        // по идее всегда
+        auto* parent = inst->getParent();
+        bool parentIsUnlikelyBlock = false;
+        if (std::is_sorted(unlikelyBlocks.cbegin(), unlikelyBlocks.cend())) {
+            //errs() << "sorted\n";
+            parentIsUnlikelyBlock = std::binary_search(
+                    unlikelyBlocks.cbegin(), unlikelyBlocks.cend(), parent);
+        }
+        if (parentIsUnlikelyBlock and not blockForOptimization) {
+            //errs() << "user inst " << *inst << '\n';
+            //errs() << "basicBlock " << *(inst->getParent()) << '\n';
+            blockForOptimization = parent;
+        } else {
             return nullptr;
         }
     }
+
+    //bool inUse = false;
+    //size_t i = 0;
+    //for (BasicBlock& currBlock : func) {
+    //    bool accessingAllocMemoryInBlock = blockAccessAllocMemory(&currBlock, alloc);
+    //    bool currBlockIsUnlikely = (&currBlock == unlikelyBlocks[i]);
+
+    //    if (currBlockIsUnlikely and not inUse) {
+    //        if (accessingAllocMemoryInBlock) {
+    //            inUse = true;
+    //            blockForOptimization = &currBlock;
+    //        }
+    //        ++i;
+    //    } else if (currBlockIsUnlikely and inUse and accessingAllocMemoryInBlock) {
+    //        return nullptr;
+    //    } else if (not currBlockIsUnlikely and accessingAllocMemoryInBlock) {
+    //        return nullptr;
+    //    }
+    //}
 
     return blockForOptimization;
 }
