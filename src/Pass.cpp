@@ -17,37 +17,23 @@ using namespace llvm;
 namespace {
 struct MemOpt : PassInfoMixin<MemOpt> {
   PreservedAnalyses run(Function& func, FunctionAnalysisManager&) {
-    CallInst* alloc = memopt::findHeapAllocation(func);
-
-    // NEW
     std::vector<CallInst*> allocs = memopt::findHeapAllocations(func);
-    // NEW
 
     std::vector<std::variant<BranchInst*, SwitchInst*>>
         weightedBranch = memopt::findWeightedBranches(func);
 
     BasicBlock* needOptBlock;
-    bool canBeOptimized = false;
 
-    //NEW
     std::vector<std::pair<CallInst*, BasicBlock*>> canBeOptimizedVec;
-    //NEW
 
     for (const auto& alloc : allocs) {
+        errs() << "alloc "<< alloc << '\n';
         for (const std::variant<BranchInst*, SwitchInst*>& branch : weightedBranch) {
             needOptBlock = std::visit([&](auto&& arg)
                     { return memopt::needOptimization(func, arg, alloc); }, branch);
             if (needOptBlock) {
-                canBeOptimized += true;
-
-                //NEW
                 auto pair = std::make_pair(alloc, needOptBlock);
                 canBeOptimizedVec.push_back(pair);
-
-                //errs() << "alloc " << *alloc << '\n';
-                //errs() << "needOptBlock " << *needOptBlock << '\n';
-
-                //NEW
             }
         }
     }
@@ -57,13 +43,8 @@ struct MemOpt : PassInfoMixin<MemOpt> {
 
     for (const auto& el : canBeOptimizedVec) {
         memopt::moveAllocInsideWeightedBlock(el.first, *el.second);
-        //errs() << canBeOptimizedVec.size() << '\n';
     }
 
-    /*if (canBeOptimized) {
-        memopt::moveAllocInsideWeightedBlock(alloc, *needOptBlock);
-        return PreservedAnalyses::none();
-    }*/
     if (canBeOptimizedVec.size() > 0) {
         errs() << canBeOptimizedVec.size() << '\n';
         return PreservedAnalyses::none();

@@ -187,14 +187,17 @@ needOptimization(Function& func, BranchInst* weightedBranch, CallInst* alloc) {
     BasicBlock* unlikelyBlock = findUnlikelyBlock(*weightedBranch);
 
     for (const auto& user : alloc->users()) {
+        errs() << "user " << *user << '\n';
         auto* inst = dyn_cast<Instruction>(user);
         if (not inst) {
             continue;
         }
         auto* parent = inst->getParent();
-        if (unlikelyBlock == parent and (not blockForOptimization
+        bool parentIsUnlikelyBlock = (unlikelyBlock == parent);
+        if (parentIsUnlikelyBlock and (not blockForOptimization
                     or blockForOptimization == parent)) {
             blockForOptimization = parent;
+            errs() << "after if" << '\n';
         } else {
             return nullptr;
         }
