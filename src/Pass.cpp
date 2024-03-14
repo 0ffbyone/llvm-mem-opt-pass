@@ -2,6 +2,7 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/IR/Metadata.h>
 #include <llvm/Support/Casting.h>
@@ -9,6 +10,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <iostream>
 
 #include "MemOpt.h"
 
@@ -26,8 +28,8 @@ struct MemOpt : PassInfoMixin<MemOpt> {
 
     std::vector<std::pair<CallInst*, BasicBlock*>> canBeOptimizedVec;
 
+    // I should check that brances are different
     for (const auto& alloc : allocs) {
-        errs() << "alloc "<< alloc << '\n';
         for (const std::variant<BranchInst*, SwitchInst*>& branch : weightedBranch) {
             needOptBlock = std::visit([&](auto&& arg)
                     { return memopt::needOptimization(func, arg, alloc); }, branch);
@@ -38,7 +40,12 @@ struct MemOpt : PassInfoMixin<MemOpt> {
         }
     }
 
-    errs() << ((canBeOptimizedVec.size() > 0)? "можно оптимизировать\n": "нельзя оптимизировать\n");
+    std::sort(canBeOptimizedVec.begin(), canBeOptimizedVec.end());
+    auto last_unique = std::unique(canBeOptimizedVec.begin(),
+            canBeOptimizedVec.end());
+    canBeOptimizedVec.erase(last_unique, canBeOptimizedVec.end());
+
+    std::cerr << ((canBeOptimizedVec.size() > 0)? "YES": "NO");
 
 
     for (const auto& el : canBeOptimizedVec) {
@@ -46,7 +53,7 @@ struct MemOpt : PassInfoMixin<MemOpt> {
     }
 
     if (canBeOptimizedVec.size() > 0) {
-        errs() << canBeOptimizedVec.size() << '\n';
+        //errs() << "size: "<< canBeOptimizedVec.size() << '\n';
         return PreservedAnalyses::none();
     }
 

@@ -2,6 +2,7 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/raw_ostream.h"
+#include <iterator>
 #include <llvm/ADT/STLExtras.h>
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/IR/Instructions.h>
@@ -17,6 +18,7 @@
 #include <variant>
 #include <vector>
 #include <cstdlib>
+#include <iostream>
 
 #include "MemOpt.h"
 
@@ -125,6 +127,7 @@ findWeightedBranches(Function& func)
             }
         }
     }
+
     return weightedBranches;
 }
 
@@ -175,8 +178,6 @@ std::vector<BasicBlock*> findUnlikelyBlock(SwitchInst& switchInst) {
 }
 
 
-
-
 BasicBlock*
 needOptimization(Function& func, BranchInst* weightedBranch, CallInst* alloc) {
     BasicBlock* blockForOptimization = nullptr;
@@ -187,9 +188,9 @@ needOptimization(Function& func, BranchInst* weightedBranch, CallInst* alloc) {
     BasicBlock* unlikelyBlock = findUnlikelyBlock(*weightedBranch);
 
     for (const auto& user : alloc->users()) {
-        errs() << "user " << *user << '\n';
         auto* inst = dyn_cast<Instruction>(user);
-        if (not inst) {
+        const auto phi_node = isa<PHINode>(inst);
+        if (not inst or phi_node) {
             continue;
         }
         auto* parent = inst->getParent();
@@ -197,7 +198,6 @@ needOptimization(Function& func, BranchInst* weightedBranch, CallInst* alloc) {
         if (parentIsUnlikelyBlock and (not blockForOptimization
                     or blockForOptimization == parent)) {
             blockForOptimization = parent;
-            errs() << "after if" << '\n';
         } else {
             return nullptr;
         }

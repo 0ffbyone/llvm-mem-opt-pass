@@ -1908,3 +1908,35 @@ events:
       
       
 ...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "/lib/cmake/llvm/FindLibEdit.cmake:28 (check_include_file)"
+      - "/lib/cmake/llvm/LLVMConfig.cmake:262 (find_package)"
+      - "CMakeLists.txt:14 (find_package)"
+    checks:
+      - "Looking for histedit.h"
+    directories:
+      source: "/home/anton/dev/cpp/my-llvm-pass/build/CMakeFiles/CMakeScratch/TryCompile-2PbTqw"
+      binary: "/home/anton/dev/cpp/my-llvm-pass/build/CMakeFiles/CMakeScratch/TryCompile-2PbTqw"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/lib/cmake/llvm"
+    buildResult:
+      variable: "HAVE_HISTEDIT_H"
+      cached: true
+      stdout: |
+        Change Dir: '/home/anton/dev/cpp/my-llvm-pass/build/CMakeFiles/CMakeScratch/TryCompile-2PbTqw'
+        
+        Run Build Command(s): /usr/bin/ninja -v cmTC_06fa4
+        [1/2] /usr/bin/cc    -o CMakeFiles/cmTC_06fa4.dir/CheckIncludeFile.c.o -c /home/anton/dev/cpp/my-llvm-pass/build/CMakeFiles/CMakeScratch/TryCompile-2PbTqw/CheckIncludeFile.c
+        [2/2] : && /usr/bin/cc   CMakeFiles/cmTC_06fa4.dir/CheckIncludeFile.c.o -o cmTC_06fa4  /usr/lib/libedit.so && :
+        
+      exitCode: 0
+...

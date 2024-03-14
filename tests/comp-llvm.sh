@@ -1,6 +1,25 @@
-#!/bin/sh
+#!/bin/bash
 
-if [ $# -eq 1 ]; then
+if [ $# -eq 1 ] && [ "${1}" == "test" ]; then
+    for filename in ./IR/*.ll; do
+        filename="$(basename "${filename}" "./IR/")"
+        opt -load-pass-plugin ../build/libMemOpt.so -passes="mem-opt" ./IR/"${filename}" -S -o ./IROptimized/"${filename}" 2> res
+        should_be_no=false
+        if [ "$filename" = "no-*" ]; then
+            should_be_no=true
+        fi
+
+        if [[ $should_be_no && ($(cat res) == "NO") ]]; then
+                printf "[CORRECT] %s\n" "${filename}"
+        elif  [[ ($should_be_no == false) &&  ($(cat res) == "YES") ]]; then
+                printf "[CORRECT] %s\n" "${filename}"
+        else
+            printf "[WRONG] %s\n" "${filename}"
+        fi
+
+    done
+
+elif [ $# -eq 1 ]; then
     NAME="$(basename "${1}" .c)"
 
     # С уровнем оптимизации -O0 атрибут "branch_weights" не генерируется,
@@ -8,7 +27,7 @@ if [ $# -eq 1 ]; then
     # эти вещи нужно проверять вручную
     clang -emit-llvm -S -O1 "${1}" -o ./IR/"${NAME}".ll
 
-elif [ $# -eq 2 ] && [ "${1}" = "bin" ]; then
+elif [ $# -eq 2 ] && [ "${1}" == "bin" ]; then
     NAME="$(basename "${2}" .c)"
 
     llc -filetype=obj ./IROptimized/"${NAME}".ll -o ./bin/"${NAME}".o
