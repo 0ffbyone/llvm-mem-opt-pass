@@ -16,6 +16,7 @@
 #include <optional>
 #include <utility>
 #include <vector>
+#include <variant>
 
 using namespace llvm;
 
@@ -47,10 +48,10 @@ std::vector<BasicBlock*> findUnlikelyBlock(SwitchInst& switchInst);
 
 
 BasicBlock*
-needOptimization(Function& func, BranchInst* weightedBranch, CallInst* alloc);
+needOptimization(BranchInst* weightedBranch, CallInst* alloc);
 
 BasicBlock*
-needOptimization(Function& func, SwitchInst* weightedSwitch, CallInst* alloc);
+needOptimization(SwitchInst* weightedSwitch, CallInst* alloc);
 
 
 void moveAllocInsideWeightedBlock(CallInst* alloc, BasicBlock& weightedBlock);

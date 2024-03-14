@@ -32,7 +32,7 @@ struct MemOpt : PassInfoMixin<MemOpt> {
     for (const auto& alloc : allocs) {
         for (const std::variant<BranchInst*, SwitchInst*>& branch : weightedBranch) {
             needOptBlock = std::visit([&](auto&& arg)
-                    { return memopt::needOptimization(func, arg, alloc); }, branch);
+                    { return memopt::needOptimization(arg, alloc); }, branch);
             if (needOptBlock) {
                 auto pair = std::make_pair(alloc, needOptBlock);
                 canBeOptimizedVec.push_back(pair);

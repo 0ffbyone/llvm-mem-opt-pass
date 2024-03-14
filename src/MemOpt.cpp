@@ -44,7 +44,6 @@ std::vector<CallInst*> findHeapAllocations(Function& func) {
 }
 
 
-
 CallInst* findHeapAllocation(Function& func) {
     for (BasicBlock& block : func) {
         for (Instruction& inst: block) {
@@ -52,9 +51,18 @@ CallInst* findHeapAllocation(Function& func) {
             if (callInst) {
                 Function* calledFunc = callInst->getCalledFunction();
                 AttributeList attributes =  calledFunc->getAttributes();
-                auto isAllocFunc = attributes.hasFnAttr(Attribute::AllocSize);
+                //auto isAllocFunc = attributes.hasFnAttr(Attribute::AllocSize);
+                bool isAllocFunc = attributes.hasFnAttr(Attribute::AllocKind);
                 if (isAllocFunc) {
-                    return callInst;
+                    Attribute allocFuncKind = attributes.getFnAttr(Attribute::AllocKind);
+                    AllocFnKind kind = allocFuncKind.getAllocKind();
+
+                    switch (kind) {
+                        case AllocFnKind::Alloc:
+                            return callInst;
+                        default:
+                            return nullptr;
+                    }
                 }
             }
         }
@@ -179,7 +187,7 @@ std::vector<BasicBlock*> findUnlikelyBlock(SwitchInst& switchInst) {
 
 
 BasicBlock*
-needOptimization(Function& func, BranchInst* weightedBranch, CallInst* alloc) {
+needOptimization(BranchInst* weightedBranch, CallInst* alloc) {
     BasicBlock* blockForOptimization = nullptr;
 
     if (weightedBranch == nullptr or alloc == nullptr) {
@@ -208,7 +216,7 @@ needOptimization(Function& func, BranchInst* weightedBranch, CallInst* alloc) {
 
 
 BasicBlock*
-needOptimization(Function& func, SwitchInst* weightedSwitch, CallInst* alloc) {
+needOptimization(SwitchInst* weightedSwitch, CallInst* alloc) {
     BasicBlock* blockForOptimization = nullptr;
     if (weightedSwitch == nullptr or alloc == nullptr) {
         return nullptr;
