@@ -2,11 +2,12 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/raw_ostream.h"
-#include <algorithm>
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/IR/Metadata.h>
 #include <llvm/Support/Casting.h>
 
+#include <type_traits>
+#include <algorithm>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -26,34 +27,34 @@ struct MemOpt : PassInfoMixin<MemOpt> {
 
     BasicBlock* needOptBlock;
 
-    std::vector<std::pair<CallInst*, BasicBlock*>> canBeOptimizedVec;
+    std::set<std::pair<CallInst*, BasicBlock*>> canBeOptimizedSet;
 
     // I should check that brances are different
-    for (const auto& alloc : allocs) {
-        for (const std::variant<BranchInst*, SwitchInst*>& branch : weightedBranch) {
-            needOptBlock = std::visit([&](auto&& arg)
-                    { return memopt::needOptimization(arg, alloc); }, branch);
+    for (auto& alloc : allocs) {
+        for (std::variant<BranchInst*, SwitchInst*>& branch : weightedBranch) {
+            needOptBlock = std::visit([&](auto&& arg) {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same<T, BranchInst*>::value) {
+                        return memopt::needOptimization<BranchInst>(arg, alloc);
+                    } else {
+                        return memopt::needOptimization<SwitchInst>(arg, alloc);
+                    }
+                    }, branch);
+
             if (needOptBlock) {
                 auto pair = std::make_pair(alloc, needOptBlock);
-                canBeOptimizedVec.push_back(pair);
+                canBeOptimizedSet.insert(pair);
             }
         }
     }
 
-    std::sort(canBeOptimizedVec.begin(), canBeOptimizedVec.end());
-    auto last_unique = std::unique(canBeOptimizedVec.begin(),
-            canBeOptimizedVec.end());
-    canBeOptimizedVec.erase(last_unique, canBeOptimizedVec.end());
+    std::cerr << ((canBeOptimizedSet.size() > 0)? "YES": "NO");
 
-    std::cerr << ((canBeOptimizedVec.size() > 0)? "YES": "NO");
-
-
-    for (const auto& el : canBeOptimizedVec) {
+    for (const auto& el : canBeOptimizedSet) {
         memopt::moveAllocInsideWeightedBlock(el.first, *el.second);
     }
 
-    if (canBeOptimizedVec.size() > 0) {
-        //errs() << "size: "<< canBeOptimizedVec.size() << '\n';
+    if (canBeOptimizedSet.size() > 0) {
         return PreservedAnalyses::none();
     }
 

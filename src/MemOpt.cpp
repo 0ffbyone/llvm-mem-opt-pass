@@ -1,28 +1,24 @@
 #include "llvm/IR/LegacyPassManager.h"
-#include "llvm/Passes/PassBuilder.h"
-#include "llvm/Passes/PassPlugin.h"
-#include "llvm/Support/raw_ostream.h"
-#include <iterator>
+#include <cstdint>
 #include <llvm/ADT/STLExtras.h>
 #include <llvm/ADT/SmallVector.h>
+#include <llvm/Analysis/LoopAnalysisManager.h>
+#include <llvm/IR/Dominators.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Metadata.h>
 #include <llvm/Support/Casting.h>
 
-#include <optional>
 #include <algorithm>
-#include <exception>
-#include <stdexcept>
-#include <unordered_map>
-#include <utility>
 #include <variant>
 #include <vector>
 #include <cstdlib>
+#include <ranges>
 #include <iostream>
 
 #include "MemOpt.h"
 
 using namespace llvm;
+
 namespace memopt {
 std::vector<CallInst*> findHeapAllocations(Function& func) {
     std::vector<CallInst*> allocs;
@@ -32,43 +28,20 @@ std::vector<CallInst*> findHeapAllocations(Function& func) {
             if (callInst) {
                 Function* calledFunc = callInst->getCalledFunction();
                 AttributeList attributes =  calledFunc->getAttributes();
-                auto isAllocFunc = attributes.hasFnAttr(Attribute::AllocSize);
-                if (isAllocFunc) {
-                    allocs.push_back(callInst);
-                }
-            }
-        }
-    }
-
-    return allocs;
-}
-
-
-CallInst* findHeapAllocation(Function& func) {
-    for (BasicBlock& block : func) {
-        for (Instruction& inst: block) {
-            auto* callInst = dyn_cast<CallInst>(&inst);
-            if (callInst) {
-                Function* calledFunc = callInst->getCalledFunction();
-                AttributeList attributes =  calledFunc->getAttributes();
-                //auto isAllocFunc = attributes.hasFnAttr(Attribute::AllocSize);
                 bool isAllocFunc = attributes.hasFnAttr(Attribute::AllocKind);
                 if (isAllocFunc) {
                     Attribute allocFuncKind = attributes.getFnAttr(Attribute::AllocKind);
                     AllocFnKind kind = allocFuncKind.getAllocKind();
 
-                    switch (kind) {
-                        case AllocFnKind::Alloc:
-                            return callInst;
-                        default:
-                            return nullptr;
+                    if (static_cast<uint64_t>(kind) & static_cast<uint64_t>(AllocFnKind::Alloc)) {
+                            allocs.push_back(callInst);
                     }
                 }
             }
         }
     }
 
-    return nullptr;
+    return allocs;
 }
 
 
@@ -158,100 +131,69 @@ bool blockAccessAllocMemory(BasicBlock* block, CallInst* alloc) {
 }
 
 
-BasicBlock* findUnlikelyBlock(BranchInst& branchInst) {
-    std::vector<BlockWeight> weights = branchWeights(&branchInst);
-
-    BlockWeight minWeightBlock;
-    for (const BlockWeight& blockWeight : weights) {
-        if (minWeightBlock.weight > blockWeight.weight) {
-            minWeightBlock = blockWeight;
-        }
-    }
-    return minWeightBlock.block;
-}
-
-
-std::vector<BasicBlock*> findUnlikelyBlock(SwitchInst& switchInst) {
-    std::vector<BasicBlock*> unlikelyBlocks{};
-    std::vector<BlockWeight> weights = branchWeights(&switchInst);
-
-    uint32_t defaultWeight = weights[0].weight;
-    for (const BlockWeight& blockWeight : weights) {
-        if (blockWeight.weight < defaultWeight) {
-            unlikelyBlocks.push_back(blockWeight.block);
-        }
-    }
-
-    return unlikelyBlocks;
-}
-
-
-BasicBlock*
-needOptimization(BranchInst* weightedBranch, CallInst* alloc) {
-    BasicBlock* blockForOptimization = nullptr;
-
-    if (weightedBranch == nullptr or alloc == nullptr) {
-        return nullptr;
-    }
-    BasicBlock* unlikelyBlock = findUnlikelyBlock(*weightedBranch);
-
-    for (const auto& user : alloc->users()) {
-        auto* inst = dyn_cast<Instruction>(user);
-        const auto phi_node = isa<PHINode>(inst);
-        if (not inst or phi_node) {
-            continue;
-        }
-        auto* parent = inst->getParent();
-        bool parentIsUnlikelyBlock = (unlikelyBlock == parent);
-        if (parentIsUnlikelyBlock and (not blockForOptimization
-                    or blockForOptimization == parent)) {
-            blockForOptimization = parent;
-        } else {
-            return nullptr;
-        }
-    }
-
-    return blockForOptimization;
-}
-
-
-BasicBlock*
-needOptimization(SwitchInst* weightedSwitch, CallInst* alloc) {
-    BasicBlock* blockForOptimization = nullptr;
-    if (weightedSwitch == nullptr or alloc == nullptr) {
-        return nullptr;
-    }
-
-    std::vector<BasicBlock*> unlikelyBlocks = findUnlikelyBlock(*weightedSwitch);
-    if (unlikelyBlocks.size() == 0) {
-        return nullptr;
-    }
-
-    for (const auto& user : alloc->users()) {
-        auto* inst = dyn_cast<Instruction>(user);
-        if (not inst) {
-            continue;
-        }
-
-        auto* parent = inst->getParent();
-        bool parentIsUnlikelyBlock = std::find(
-                unlikelyBlocks.cbegin(), unlikelyBlocks.cend(), parent)
-            != unlikelyBlocks.cend();
-
-        if (parentIsUnlikelyBlock and (not blockForOptimization
-                    or blockForOptimization == parent)) {
-            blockForOptimization = parent;
-        } else {
-            return nullptr;
-        }
-    }
-
-    return blockForOptimization;
-}
-
-
 void moveAllocInsideWeightedBlock(CallInst* alloc, BasicBlock& weightedBlock) {
     auto insertionPt = weightedBlock.getFirstInsertionPt();
     alloc->moveBefore(weightedBlock, insertionPt);
 }
+
+std::vector<BasicBlock*> getDominators(BasicBlock* basicBlock) {
+  std::vector<BasicBlock *> dominators;
+  DominatorTree domTree(*basicBlock->getParent());
+  DomTreeNode *node = domTree.getNode(basicBlock);
+  if (!node) {
+    return dominators;
+  }
+
+  node = node->getIDom();
+  while (node && node->getBlock()) {
+    dominators.push_back(node->getBlock());
+    node = node->getIDom();
+  }
+
+  return dominators;
+}
+
+Instruction* instNotPhi(User* user) {
+    auto* inst = dyn_cast<Instruction>(user);
+    bool phiNode = isa<PHINode>(inst);
+    if (not inst or phiNode) {
+        return nullptr;
+    }
+    return inst;
+}
+
+
+//BasicBlock* closestCommonDominator(std::vector<DominatorTree*> )
+
+
+bool dominatedByUnlikelyBlock(std::vector<BasicBlock*>& unlikelyBlocks,
+                                Instruction* inst)
+{
+    BasicBlock* parent = inst->getParent();
+    std::vector<BasicBlock*> dominators = getDominators(parent);
+    dominators.push_back(parent);
+
+
+    //errs() << "current BB\n"<< *(inst->getParent()) << '\n';
+    //for (const auto& el : dominators) {
+    //    errs() << *el << '\n';
+    //}
+
+
+    std::sort(dominators.begin(), dominators.end());
+    std::sort(unlikelyBlocks.begin(), unlikelyBlocks.end());
+
+    std::vector<BasicBlock*> unlikelyDominators;
+    std::ranges::set_intersection(unlikelyBlocks, dominators,
+            std::back_inserter(unlikelyDominators));
+
+    //if (unlikelyDominators.size() > 0) {
+    //    std::cout << "some unlikely dominator\n";
+    //} else {
+    //    std::cout << "no unlikely dominators\n";
+    //}
+    return unlikelyDominators.size() > 0? true: false;
+
+}
+
 } // namespace memopt

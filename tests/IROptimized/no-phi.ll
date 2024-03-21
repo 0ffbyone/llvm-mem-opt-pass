@@ -1,5 +1,5 @@
-; ModuleID = './IR/phi-two.ll'
-source_filename = "./IR/phi-two.ll"
+; ModuleID = './IR/no-phi.ll'
+source_filename = "./IR/no-phi.ll"
 
 define ptr @foo(i32 %x, i32 %y) {
 entry:
@@ -22,15 +22,12 @@ unlikely:                                         ; preds = %second, %first
   br label %retlabel
 
 retlabel:                                         ; preds = %unlikely
-  ret ptr %0
+  ret ptr null
 }
 
 ; Function Attrs: mustprogress nofree nounwind willreturn allockind("alloc,uninitialized") allocsize(0) memory(inaccessiblemem: readwrite)
 declare noalias noundef ptr @malloc(i64 noundef) local_unnamed_addr #0
 
-declare void @bar(ptr noundef) local_unnamed_addr #1
-
 attributes #0 = { mustprogress nofree nounwind willreturn allockind("alloc,uninitialized") allocsize(0) memory(inaccessiblemem: readwrite) "alloc-family"="malloc" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 
 !0 = !{!"branch_weights", i32 1, i32 2000}

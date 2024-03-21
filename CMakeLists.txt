@@ -7,6 +7,8 @@ project(llvm-mem-opt)
 # Set this to a valid LLVM installation dir
 set(LT_LLVM_INSTALL_DIR "" CACHE PATH "LLVM installation directory")
 
+set(CMAKE_COLOR_DIAGNOSTICS ON)
+
 # Add the location of LLVMConfig.cmake to CMake search paths (so that
 # find_package can locate it)
 list(APPEND CMAKE_PREFIX_PATH "${LT_LLVM_INSTALL_DIR}/lib/cmake/llvm/")
@@ -23,7 +25,8 @@ include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
 # 2. LLVM-TUTOR BUILD CONFIGURATION
 #===============================================================================
 # Use the same C++ standard as LLVM does
-set(CMAKE_CXX_STANDARD 17 CACHE STRING "")
+#set(CMAKE_CXX_STANDARD 20 CACHE STRING "")
+set(CMAKE_CXX_STANDARD 20)
 
 # LLVM is normally built without RTTI. Be consistent with that.
 if(NOT LLVM_ENABLE_RTTI)

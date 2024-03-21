@@ -2,7 +2,7 @@
 
 extern int* bar(int* ptr);
 
-int* foo(int x, int y) {
+int foo(int x, int y) {
     int* p = (int*)malloc(sizeof(int) * 1024);
 
     int* new = NULL;
@@ -10,5 +10,5 @@ int* foo(int x, int y) {
         new = bar(p);
     }
 
-    return new;
+    return 0;
 }

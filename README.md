@@ -79,6 +79,7 @@ define dso_local i32 @foo(i32 noundef %0) local_unnamed_addr #0 {
   br i1 %2, label %3, label %5, !prof !5
 
 3:                                                ; preds = %1
+
   %4 = tail call noalias dereferenceable_or_null(1024) ptr @malloc(i64 noundef 1024) #3
   tail call void @bar(ptr noundef %4) #4
   br label %5
@@ -90,5 +91,9 @@ define dso_local i32 @foo(i32 noundef %0) local_unnamed_addr #0 {
 
 ```
 
+IR/tests
+
+`bb-five` - вложенные друг в друга unlikely блоки, должен оптимизировать
+внутрь самого последнего, который бы затрагивал все аллокации.
 
 

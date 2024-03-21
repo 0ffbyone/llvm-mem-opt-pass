@@ -454,7 +454,7 @@ FIND_PACKAGE_MESSAGE_DETAILS_FFI:INTERNAL=[/usr/lib/libffi.so][1][v()]
 //Details about finding LibEdit
 FIND_PACKAGE_MESSAGE_DETAILS_LibEdit:INTERNAL=[/usr/include][/usr/lib/libedit.so][v2.11()]
 //Details about finding LibXml2
-FIND_PACKAGE_MESSAGE_DETAILS_LibXml2:INTERNAL=[/usr/lib/libxml2.so][/usr/include/libxml2][v2.12.5()]
+FIND_PACKAGE_MESSAGE_DETAILS_LibXml2:INTERNAL=[/usr/lib/libxml2.so][/usr/include/libxml2][v2.12.6()]
 //Details about finding Terminfo
 FIND_PACKAGE_MESSAGE_DETAILS_Terminfo:INTERNAL=[/usr/lib/libtinfo.so][1][v()]
 //Details about finding ZLIB

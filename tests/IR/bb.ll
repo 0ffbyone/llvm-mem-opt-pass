@@ -1,6 +1,5 @@
 ; ModuleID = 'bb.ll'
 
-
 define ptr @foo(i32 %x, i32 %y) {
 entry:
   %allocated = tail call noalias dereferenceable_or_null(1024) ptr @malloc(i64 noundef 1024) #3

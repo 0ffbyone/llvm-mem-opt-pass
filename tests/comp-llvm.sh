@@ -5,16 +5,23 @@ if [ $# -eq 1 ] && [ "${1}" == "test" ]; then
         filename="$(basename "${filename}" "./IR/")"
         opt -load-pass-plugin ../build/libMemOpt.so -passes="mem-opt" ./IR/"${filename}" -S -o ./IROptimized/"${filename}" 2> res
         should_be_no=false
-        if [ "$filename" = "no-*" ]; then
+        if [[ $filename == "no-"* ]]; then
             should_be_no=true
         fi
 
-        if [[ $should_be_no && ($(cat res) == "NO") ]]; then
-                printf "[CORRECT] %s\n" "${filename}"
-        elif  [[ ($should_be_no == false) &&  ($(cat res) == "YES") ]]; then
-                printf "[CORRECT] %s\n" "${filename}"
+        #echo -n $filename " " $should_be_no " "
+        #cat res
+        #echo
+
+        if [[ ($should_be_no == true) && ($(cat res) == "NO") ]]; then
+            printf "[CORRECT] %s\n" "${filename}"
+            #echo
+        elif  [[ ($should_be_no == false) && ($(cat res) == "YES") ]]; then
+            printf "[CORRECT] %s\n" "${filename}"
+            #echo
         else
             printf "[WRONG] %s\n" "${filename}"
+            #echo
         fi
 
     done

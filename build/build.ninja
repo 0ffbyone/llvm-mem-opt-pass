@@ -71,7 +71,7 @@ build cmake_object_order_depends_target_MemOpt: phony || CMakeFiles/MemOpt.dir
 build CMakeFiles/MemOpt.dir/src/Pass.cpp.o: CXX_COMPILER__MemOpt_unscanned_ /home/anton/dev/cpp/my-llvm-pass/src/Pass.cpp || cmake_object_order_depends_target_MemOpt
   DEFINES = -DMemOpt_EXPORTS
   DEP_FILE = CMakeFiles/MemOpt.dir/src/Pass.cpp.o.d
-  FLAGS = -std=gnu++17 -fPIC
+  FLAGS = -std=gnu++20 -fPIC -fdiagnostics-color=always
   INCLUDES = -isystem //include
   OBJECT_DIR = CMakeFiles/MemOpt.dir
   OBJECT_FILE_DIR = CMakeFiles/MemOpt.dir/src
@@ -79,7 +79,7 @@ build CMakeFiles/MemOpt.dir/src/Pass.cpp.o: CXX_COMPILER__MemOpt_unscanned_ /hom
 build CMakeFiles/MemOpt.dir/src/MemOpt.cpp.o: CXX_COMPILER__MemOpt_unscanned_ /home/anton/dev/cpp/my-llvm-pass/src/MemOpt.cpp || cmake_object_order_depends_target_MemOpt
   DEFINES = -DMemOpt_EXPORTS
   DEP_FILE = CMakeFiles/MemOpt.dir/src/MemOpt.cpp.o.d
-  FLAGS = -std=gnu++17 -fPIC
+  FLAGS = -std=gnu++20 -fPIC -fdiagnostics-color=always
   INCLUDES = -isystem //include
   OBJECT_DIR = CMakeFiles/MemOpt.dir
   OBJECT_FILE_DIR = CMakeFiles/MemOpt.dir/src
