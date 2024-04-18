@@ -12,16 +12,15 @@
 #include <variant>
 #include <vector>
 #include <cstdlib>
-#include <ranges>
-#include <iostream>
 
 #include "MemOpt.h"
 
 using namespace llvm;
+using std::vector;
 
 namespace memopt {
-std::vector<CallInst*> findHeapAllocations(Function& func) {
-    std::vector<CallInst*> allocs;
+vector<CallInst*> findHeapAllocations(Function& func) {
+    vector<CallInst*> allocs;
     for (BasicBlock& block : func) {
         for (Instruction& inst: block) {
             auto* callInst = dyn_cast<CallInst>(&inst);
@@ -45,8 +44,8 @@ std::vector<CallInst*> findHeapAllocations(Function& func) {
 }
 
 
-std::vector<BlockWeight> branchWeights(const BranchInst* branchInst) {
-    std::vector<BlockWeight> weights;
+vector<BlockWeight> branchWeights(const BranchInst* branchInst) {
+    vector<BlockWeight> weights;
     weights.reserve(2);
 
     MDNode* metaData = branchInst->getMetadata(LLVMContext::MD_prof);
@@ -68,8 +67,8 @@ std::vector<BlockWeight> branchWeights(const BranchInst* branchInst) {
 }
 
 
-std::vector<BlockWeight> branchWeights(SwitchInst* switchInst) {
-    std::vector<BlockWeight> weights{};
+vector<BlockWeight> branchWeights(SwitchInst* switchInst) {
+    vector<BlockWeight> weights{};
     SwitchInstProfUpdateWrapper profWrapper = SwitchInstProfUpdateWrapper(*switchInst);
     for (size_t i = 0; i < switchInst->getNumSuccessors(); ++i) {
         SwitchInstProfUpdateWrapper::CaseWeightOpt weightOpt =
@@ -84,10 +83,10 @@ std::vector<BlockWeight> branchWeights(SwitchInst* switchInst) {
 }
 
 
-std::vector<std::variant<BranchInst*, SwitchInst*>>
+vector<std::variant<BranchInst*, SwitchInst*>>
 findWeightedBranches(Function& func)
 {
-    std::vector<std::variant<BranchInst*, SwitchInst*>> weightedBranches;
+    vector<std::variant<BranchInst*, SwitchInst*>> weightedBranches;
     std::variant<BranchInst*, SwitchInst*> branchOrSwitch;
     for (BasicBlock& block: func) {
         for (Instruction& inst : block) {
@@ -136,8 +135,9 @@ void moveAllocInsideWeightedBlock(CallInst* alloc, BasicBlock& weightedBlock) {
     alloc->moveBefore(weightedBlock, insertionPt);
 }
 
-std::vector<BasicBlock*> getDominators(BasicBlock* basicBlock) {
-  std::vector<BasicBlock *> dominators;
+
+[[deprecated]] vector<BasicBlock*> getDominators(BasicBlock* basicBlock) {
+  vector<BasicBlock *> dominators;
   DominatorTree domTree(*basicBlock->getParent());
   DomTreeNode *node = domTree.getNode(basicBlock);
   if (!node) {
@@ -153,6 +153,7 @@ std::vector<BasicBlock*> getDominators(BasicBlock* basicBlock) {
   return dominators;
 }
 
+
 Instruction* instNotPhi(User* user) {
     auto* inst = dyn_cast<Instruction>(user);
     bool phiNode = isa<PHINode>(inst);
@@ -163,14 +164,10 @@ Instruction* instNotPhi(User* user) {
 }
 
 
-//BasicBlock* closestCommonDominator(std::vector<DominatorTree*> )
-
-
-bool dominatedByUnlikelyBlock(std::vector<BasicBlock*>& unlikelyBlocks,
-                                Instruction* inst)
+[[deprecated]] bool _dominatedByUnlikelyBlock(vector<BasicBlock*>& unlikelyBlocks, Instruction* inst)
 {
     BasicBlock* parent = inst->getParent();
-    std::vector<BasicBlock*> dominators = getDominators(parent);
+    vector<BasicBlock*> dominators = getDominators(parent);
     dominators.push_back(parent);
 
 
@@ -183,7 +180,7 @@ bool dominatedByUnlikelyBlock(std::vector<BasicBlock*>& unlikelyBlocks,
     std::sort(dominators.begin(), dominators.end());
     std::sort(unlikelyBlocks.begin(), unlikelyBlocks.end());
 
-    std::vector<BasicBlock*> unlikelyDominators;
+    vector<BasicBlock*> unlikelyDominators;
     std::ranges::set_intersection(unlikelyBlocks, dominators,
             std::back_inserter(unlikelyDominators));
 
@@ -194,6 +191,19 @@ bool dominatedByUnlikelyBlock(std::vector<BasicBlock*>& unlikelyBlocks,
     //}
     return unlikelyDominators.size() > 0? true: false;
 
+}
+
+
+bool dominatedByUnlikelyBlock(Function* func, vector<BasicBlock*>& unlikelyBlocks, Instruction* inst) {
+    DominatorTree domTree(*func);
+    for (auto& block : unlikelyBlocks) {
+        Instruction* firstInst = block->getFirstNonPHI();
+        bool currDom = domTree.dominates(firstInst, inst->getParent());
+        if ((inst->getParent() == block) or currDom) {
+            return true;
+        }
+    }
+    return false;
 }
 
 } // namespace memopt

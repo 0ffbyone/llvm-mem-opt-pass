@@ -50,6 +50,11 @@ Instruction* instNotPhi(User* user);
 
 std::vector<BasicBlock*> getDominators(BasicBlock* basicBlock);
 
+BasicBlock* lowestCommonAncestor(DominatorTree* dominatorTree, const std::vector<BasicBlock*>& unlikelyBlocks);
+
+bool _dominatedByUnlikelyBlock(std::vector<BasicBlock*>& unlikelyBlocks, Instruction* inst);
+bool dominatedByUnlikelyBlock(Function* func, std::vector<BasicBlock*>& unlikelyBlocks, Instruction* inst);
+
 
 template<typename T>
 std::vector<BasicBlock*> findUnlikelyBlock(T* TInst) {
@@ -57,7 +62,6 @@ std::vector<BasicBlock*> findUnlikelyBlock(T* TInst) {
     std::vector<BlockWeight> weights;
     weights = branchWeights(TInst);
     if constexpr (std::is_same<T, BranchInst>::value) {
-        //weights = branchWeights(TInst);
         BlockWeight minWeightBlock;
         for (const BlockWeight& blockWeight : weights) {
             if (minWeightBlock.weight > blockWeight.weight) {
@@ -67,7 +71,6 @@ std::vector<BasicBlock*> findUnlikelyBlock(T* TInst) {
 
         unlikelyBlocks.push_back(minWeightBlock.block);
     } else {
-        //weights = branchWeights(TInst);
         uint32_t defaultWeight = weights[0].weight;
         for (const BlockWeight& blockWeight : weights) {
             if (blockWeight.weight < defaultWeight) {
@@ -79,10 +82,9 @@ std::vector<BasicBlock*> findUnlikelyBlock(T* TInst) {
     return unlikelyBlocks;
 }
 
-bool dominatedByUnlikelyBlock(std::vector<BasicBlock*>& unlikelyBlocks, Instruction* inst);
 
 template<typename T>
-BasicBlock* needOptimization(T* weightedT, CallInst* alloc) {
+BasicBlock* needOptimization(Function* func, T* weightedT, CallInst* alloc) {
     BasicBlock* blockForOptimization = nullptr;
     if (weightedT == nullptr or alloc == nullptr) {
         return nullptr;
@@ -101,7 +103,8 @@ BasicBlock* needOptimization(T* weightedT, CallInst* alloc) {
 
         BasicBlock* parent = inst->getParent();
         //std::cout << "before domination\n";
-        bool isDominatedByUnlikelyBlock = dominatedByUnlikelyBlock(unlikelyBlocks, inst);
+        //bool isDominatedByUnlikelyBlock = dominatedByUnlikelyBlock(unlikelyBlocks, inst);
+        bool isDominatedByUnlikelyBlock = dominatedByUnlikelyBlock(func, unlikelyBlocks, inst);
         if (isDominatedByUnlikelyBlock and (not blockForOptimization
                         or blockForOptimization == parent)) {
             blockForOptimization = parent;

@@ -1,4 +1,4 @@
 ./tests/bin/*
 !/tests/bin/main.o
 ./tests/res
-./build/*
+/build/
