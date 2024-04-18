@@ -97,3 +97,9 @@ IR/tests
 внутрь самого последнего, который бы затрагивал все аллокации.
 
 
+/runtime_core/static_core/libllvmbackend/transforms/passes - добавляем свой пасс
+/runtime_core/static_core/libllvmbackend/transforms/passes/passes.yaml - добавляем свой пасс
+/runtime_core/static_core/libllvmbackend/transforms/pipeline.cfd - добавляем свой пасс
+/runtime_core/static_core/libllvmbackend/CMakeLists.txt - добавляем свои файлы пасса для конфигурации
+
+
