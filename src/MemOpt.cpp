@@ -1,5 +1,4 @@
 #include "llvm/IR/LegacyPassManager.h"
-#include <cstdint>
 #include <llvm/ADT/STLExtras.h>
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/Analysis/LoopAnalysisManager.h>
@@ -9,6 +8,7 @@
 #include <llvm/Support/Casting.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <variant>
 #include <vector>
 #include <cstdlib>
