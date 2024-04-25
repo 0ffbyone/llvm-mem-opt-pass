@@ -96,4 +96,19 @@ IR/tests
 `bb-five` - вложенные друг в друга unlikely блоки, должен оптимизировать
 внутрь самого последнего, который бы затрагивал все аллокации.
 
+/runtime_core/static_core/libllvmbackend/transforms/passes - добавляем свой пасс
+/runtime_core/static_core/libllvmbackend/transforms/passes/passes.yaml - добавляем свой пасс
+/runtime_core/static_core/libllvmbackend/transforms/pipeline.cfd - добавляем свой пасс
+/runtime_core/static_core/libllvmbackend/CMakeLists.txt - добавляем свои файлы пасса для конфигурации
+
+/runtime_core/static_core/scripts/llvm/buil.sh - компиляция llvm'а, лучше использовать скрипт в /tmp/build.sh
+
+
+
+в build просто ninja
+
+
+sudo docker container list --all - находим последний ubuntu контейнер
+sudo docker exec -it c51d62f99585 bash
+
 
