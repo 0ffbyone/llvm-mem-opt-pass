@@ -202,12 +202,12 @@ Instruction* instNotPhi(User* user) {
 }
 
 
-bool dominatedByUnlikelyBlock(Function* func, std::set<BasicBlock*>& unlikelyBlocks, Instruction* inst) {
+bool dominatedByUnlikelyBlock(Function* func, std::set<BasicBlock*>& unlikelyBlocks, BasicBlock* blockToCheck) {
     DominatorTree domTree(*func);
     for (auto& block : unlikelyBlocks) {
         Instruction* firstInst = block->getFirstNonPHI();
-        bool currDom = domTree.dominates(firstInst, inst->getParent());
-        if ((inst->getParent() == block) or currDom) {
+        bool currDom = domTree.dominates(firstInst, blockToCheck);
+        if ((blockToCheck == block) or currDom) {
             return true;
         }
     }
@@ -230,39 +230,18 @@ BasicBlock* needOptimization(Function* func, std::set<BasicBlock*>& unlikelyBloc
     Instruction* inst = nullptr;
     for (const auto& user : alloc->users()) {
         auto* currentInst = dyn_cast<Instruction>(user);
-        //Instruction* currentInst = instNotPhi(user);
-        //if (not currentInst) {
-        //    continue;
-        //}
-
-        //BasicBlock* parent = inst->getParent();
-        //usersOfAlloc.push_back(parent);
         if (inst == nullptr) {
             inst = currentInst;
         }
-        Instruction* dominatingInst = domTree.findNearestCommonDominator(currentInst, inst);
-        //errs() << *dominatingInst;
+        Instruction* dominatingInst = leastCommonAncestorInstruction(&domTree, currentInst, inst);
         inst = dominatingInst;
-        BasicBlock* parent = inst->getParent();
-
-
-
-
-
-        //bool isDominatedByUnlikelyBlock = dominatedByUnlikelyBlock(func, unlikelyBlocks, inst);
-        //if (isDominatedByUnlikelyBlock and (not blockForOptimization
-        //                or blockForOptimization == parent)) {
-        //    blockForOptimization = parent;
-        //} else {
-        //    return nullptr;
-        //}
     }
     bool phiNode = isa<PHINode>(inst);
     if (not inst or phiNode) {
         return nullptr;
     }
     BasicBlock* parent = inst->getParent();
-    bool isDominatedByUnlikelyBlock = dominatedByUnlikelyBlock(func, unlikelyBlocks, inst);
+    bool isDominatedByUnlikelyBlock = dominatedByUnlikelyBlock(func, unlikelyBlocks, parent);
     if (isDominatedByUnlikelyBlock and (not blockForOptimization
                     or blockForOptimization == parent)) {
         blockForOptimization = parent;
@@ -275,17 +254,18 @@ BasicBlock* needOptimization(Function* func, std::set<BasicBlock*>& unlikelyBloc
 }
 
 
-//BasicBlock* leastCommonAncestor(const std::vector<BasicBlock*> usersOfAlloc) {
-//    if (usersOfAlloc.size() < 1) {
-//        return nullptr;
-//    }
-//    DominatorTree domTree(*usersOfAlloc[0]->getParent());
-//
-//    for (size_t i = 0; i < usersOfAlloc.size() - 1; ++i) {
-//        domTree.findNearestCommonDominator(usersOfAlloc)
-//    }
-//
-//}
+Instruction* leastCommonAncestorInstruction(DominatorTree* domTree, Instruction* firstInstruction, Instruction* secondInstruction) {
+    BasicBlock* firstBasicBlock = firstInstruction->getParent();
+    BasicBlock* secondBasicBlock = secondInstruction->getParent();
+    BasicBlock* dominatingBasicBlock = domTree->findNearestCommonDominator(firstBasicBlock, secondBasicBlock);
+    if (firstBasicBlock == dominatingBasicBlock) {
+        return firstInstruction;
+    }
+    if (secondBasicBlock == dominatingBasicBlock) {
+        return secondInstruction;
+    }
+    return dominatingBasicBlock->getTerminator();
+}
 
 
 

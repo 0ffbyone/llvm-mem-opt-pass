@@ -53,7 +53,9 @@ std::vector<BasicBlock*> getDominators(BasicBlock* basicBlock);
 BasicBlock* lowestCommonAncestor(DominatorTree* dominatorTree, const std::vector<BasicBlock*>& unlikelyBlocks);
 
 bool _dominatedByUnlikelyBlock(std::vector<BasicBlock*>& unlikelyBlocks, Instruction* inst);
-bool dominatedByUnlikelyBlock(Function* func, std::set<BasicBlock*>& unlikelyBlocks, Instruction* inst);
+bool dominatedByUnlikelyBlock(Function* func, std::set<BasicBlock*>& unlikelyBlocks, BasicBlock* blockToCheck);
+
+Instruction* leastCommonAncestorInstruction(DominatorTree* domTree, Instruction* firstInstruction, Instruction* secondInstruction);
 
 
 template<typename T>
