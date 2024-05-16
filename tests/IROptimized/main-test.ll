@@ -1,5 +1,5 @@
-; ModuleID = './IR/main-test.ll'
-source_filename = "./IR/main-test.ll"
+; ModuleID = './tests/IR/main-test.ll'
+source_filename = "./tests/IR/main-test.ll"
 
 define dso_local i32 @foo(i32 noundef %x) {
 entry:

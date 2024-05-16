@@ -28,7 +28,7 @@ std::vector<CallInst*> findHeapAllocations(Function &func);
 
 struct BlockWeight {
   BlockWeight(){};
-  BlockWeight(BasicBlock *block, uint32_t weight) 
+  BlockWeight(BasicBlock *block, uint32_t weight)
       : block(block), weight(weight) {}
 
   BasicBlock *block{nullptr};
@@ -53,12 +53,12 @@ std::vector<BasicBlock*> getDominators(BasicBlock* basicBlock);
 BasicBlock* lowestCommonAncestor(DominatorTree* dominatorTree, const std::vector<BasicBlock*>& unlikelyBlocks);
 
 bool _dominatedByUnlikelyBlock(std::vector<BasicBlock*>& unlikelyBlocks, Instruction* inst);
-bool dominatedByUnlikelyBlock(Function* func, std::vector<BasicBlock*>& unlikelyBlocks, Instruction* inst);
+bool dominatedByUnlikelyBlock(Function* func, std::set<BasicBlock*>& unlikelyBlocks, Instruction* inst);
 
 
 template<typename T>
-std::vector<BasicBlock*> findUnlikelyBlock(T* TInst) {
-    std::vector<BasicBlock*> unlikelyBlocks{};
+std::set<BasicBlock*> findUnlikelyBlocks(T* TInst) {
+    std::set<BasicBlock*> unlikelyBlocks{};
     std::vector<BlockWeight> weights;
     weights = branchWeights(TInst);
     if constexpr (std::is_same<T, BranchInst>::value) {
@@ -69,12 +69,12 @@ std::vector<BasicBlock*> findUnlikelyBlock(T* TInst) {
             }
         }
 
-        unlikelyBlocks.push_back(minWeightBlock.block);
+        unlikelyBlocks.insert(minWeightBlock.block);
     } else {
         uint32_t defaultWeight = weights[0].weight;
         for (const BlockWeight& blockWeight : weights) {
             if (blockWeight.weight < defaultWeight) {
-                unlikelyBlocks.push_back(blockWeight.block);
+                unlikelyBlocks.insert(blockWeight.block);
             }
         }
     }
@@ -82,38 +82,39 @@ std::vector<BasicBlock*> findUnlikelyBlock(T* TInst) {
     return unlikelyBlocks;
 }
 
+BasicBlock* needOptimization(Function* func, std::set<BasicBlock*>& unlikelyBlocks, CallInst* alloc);
 
-template<typename T>
-BasicBlock* needOptimization(Function* func, T* weightedT, CallInst* alloc) {
-    BasicBlock* blockForOptimization = nullptr;
-    if (weightedT == nullptr or alloc == nullptr) {
-        return nullptr;
-    }
-
-    std::vector<BasicBlock*> unlikelyBlocks = findUnlikelyBlock(weightedT);
-    if (unlikelyBlocks.size() == 0) {
-        return nullptr;
-    }
-
-    for (const auto& user : alloc->users()) {
-        auto* inst = instNotPhi(user);
-        if (not inst) {
-            continue;
-        }
-
-        BasicBlock* parent = inst->getParent();
-        //std::cout << "before domination\n";
-        //bool isDominatedByUnlikelyBlock = dominatedByUnlikelyBlock(unlikelyBlocks, inst);
-        bool isDominatedByUnlikelyBlock = dominatedByUnlikelyBlock(func, unlikelyBlocks, inst);
-        if (isDominatedByUnlikelyBlock and (not blockForOptimization
-                        or blockForOptimization == parent)) {
-            blockForOptimization = parent;
-        } else {
-            return nullptr;
-        }
-    }
-
-    return blockForOptimization;
-}
+//template<typename T>
+//BasicBlock* needOptimization(Function* func, T* weightedT, CallInst* alloc) {
+//    BasicBlock* blockForOptimization = nullptr;
+//    if (weightedT == nullptr or alloc == nullptr) {
+//        return nullptr;
+//    }
+//
+//    //std::vector<BasicBlock*> unlikelyBlocks = findUnlikelyBlocks(weightedT);
+//    //if (unlikelyBlocks.size() == 0) {
+//    //    return nullptr;
+//    //}
+//
+//    for (const auto& user : alloc->users()) {
+//        auto* inst = instNotPhi(user);
+//        if (not inst) {
+//            continue;
+//        }
+//
+//        BasicBlock* parent = inst->getParent();
+//        //std::cout << "before domination\n";
+//        //bool isDominatedByUnlikelyBlock = dominatedByUnlikelyBlock(unlikelyBlocks, inst);
+//        bool isDominatedByUnlikelyBlock = dominatedByUnlikelyBlock(func, unlikelyBlocks, inst);
+//        if (isDominatedByUnlikelyBlock and (not blockForOptimization
+//                        or blockForOptimization == parent)) {
+//            blockForOptimization = parent;
+//        } else {
+//            return nullptr;
+//        }
+//    }
+//
+//    return blockForOptimization;
+//}
 
 } // namespace memopt

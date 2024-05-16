@@ -96,12 +96,12 @@ IR/tests
 `bb-five` - вложенные друг в друга unlikely блоки, должен оптимизировать
 внутрь самого последнего, который бы затрагивал все аллокации.
 
-/runtime_core/static_core/libllvmbackend/transforms/passes - добавляем свой пасс
-/runtime_core/static_core/libllvmbackend/transforms/passes/passes.yaml - добавляем свой пасс
-/runtime_core/static_core/libllvmbackend/transforms/pipeline.cfd - добавляем свой пасс
-/runtime_core/static_core/libllvmbackend/CMakeLists.txt - добавляем свои файлы пасса для конфигурации
+[x] /runtime_core/static_core/libllvmbackend/transforms/passes - добавляем свой пасс
+[x] /runtime_core/static_core/libllvmbackend/transforms/passes/passes.yaml - добавляем свой пасс
+[x] /runtime_core/static_core/libllvmbackend/transforms/pipeline.cfd - добавляем свой пасс
+[x] /runtime_core/static_core/libllvmbackend/CMakeLists.txt - добавляем свои файлы пасса для конфигурации
 
-/runtime_core/static_core/scripts/llvm/buil.sh - компиляция llvm'а, лучше использовать скрипт в /tmp/build.sh
+[] /runtime_core/static_core/scripts/llvm/build.sh - компиляция llvm'а, лучше использовать скрипт в /tmp/build.sh
 
 
 

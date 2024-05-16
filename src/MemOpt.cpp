@@ -9,6 +9,7 @@
 #include <llvm/Support/Casting.h>
 
 #include <algorithm>
+#include <llvm/Support/raw_ostream.h>
 #include <variant>
 #include <vector>
 #include <cstdlib>
@@ -24,18 +25,23 @@ vector<CallInst*> findHeapAllocations(Function& func) {
     for (BasicBlock& block : func) {
         for (Instruction& inst: block) {
             auto* callInst = dyn_cast<CallInst>(&inst);
-            if (callInst) {
-                Function* calledFunc = callInst->getCalledFunction();
-                AttributeList attributes =  calledFunc->getAttributes();
-                bool isAllocFunc = attributes.hasFnAttr(Attribute::AllocKind);
-                if (isAllocFunc) {
-                    Attribute allocFuncKind = attributes.getFnAttr(Attribute::AllocKind);
-                    AllocFnKind kind = allocFuncKind.getAllocKind();
+            if (not callInst) {
+                continue;
+            }
+            Function* calledFunc = callInst->getCalledFunction();
+            if (not calledFunc) {
+                continue;
+            }
+            AttributeList attributes =  calledFunc->getAttributes();
+            bool isAllocFunc = attributes.hasFnAttr(Attribute::AllocKind);
+            if (not isAllocFunc) {
+                continue;
+            }
+            Attribute allocFuncKind = attributes.getFnAttr(Attribute::AllocKind);
+            AllocFnKind kind = allocFuncKind.getAllocKind();
 
-                    if (static_cast<uint64_t>(kind) & static_cast<uint64_t>(AllocFnKind::Alloc)) {
-                            allocs.push_back(callInst);
-                    }
-                }
+            if (static_cast<uint64_t>(kind) & static_cast<uint64_t>(AllocFnKind::Alloc)) {
+                allocs.push_back(callInst);
             }
         }
     }
@@ -95,15 +101,17 @@ findWeightedBranches(Function& func)
 
             if (branchInst) {
                 branchOrSwitch = branchInst;
-            } else if (switchInst){
+            } else if (switchInst) {
                 branchOrSwitch = switchInst;
             }
-            if (branchInst or switchInst) {
-                if (std::visit([](auto&& arg)
-                { return branchWeights(arg).size(); }, branchOrSwitch) != 0)
-                {
-                    weightedBranches.push_back(branchOrSwitch);
-                }
+
+            if (not (branchInst or switchInst)) {
+                continue;
+            }
+
+            auto numberOfWeightedBranches = std::visit([&](auto&& arg) { return branchWeights(arg).size(); }, branchOrSwitch);
+            if (numberOfWeightedBranches != 0) {
+                weightedBranches.push_back(branchOrSwitch);
             }
         }
     }
@@ -137,20 +145,20 @@ void moveAllocInsideWeightedBlock(CallInst* alloc, BasicBlock& weightedBlock) {
 
 
 [[deprecated]] vector<BasicBlock*> getDominators(BasicBlock* basicBlock) {
-  vector<BasicBlock *> dominators;
-  DominatorTree domTree(*basicBlock->getParent());
-  DomTreeNode *node = domTree.getNode(basicBlock);
-  if (!node) {
-    return dominators;
-  }
+    vector<BasicBlock*> dominators;
+    DominatorTree domTree(*basicBlock->getParent());
+    DomTreeNode *node = domTree.getNode(basicBlock);
+    if (!node) {
+      return dominators;
+    }
 
-  node = node->getIDom();
-  while (node && node->getBlock()) {
-    dominators.push_back(node->getBlock());
     node = node->getIDom();
-  }
+    while (node && node->getBlock()) {
+      dominators.push_back(node->getBlock());
+      node = node->getIDom();
+    }
 
-  return dominators;
+    return dominators;
 }
 
 
@@ -194,7 +202,7 @@ Instruction* instNotPhi(User* user) {
 }
 
 
-bool dominatedByUnlikelyBlock(Function* func, vector<BasicBlock*>& unlikelyBlocks, Instruction* inst) {
+bool dominatedByUnlikelyBlock(Function* func, std::set<BasicBlock*>& unlikelyBlocks, Instruction* inst) {
     DominatorTree domTree(*func);
     for (auto& block : unlikelyBlocks) {
         Instruction* firstInst = block->getFirstNonPHI();
@@ -205,5 +213,80 @@ bool dominatedByUnlikelyBlock(Function* func, vector<BasicBlock*>& unlikelyBlock
     }
     return false;
 }
+
+BasicBlock* needOptimization(Function* func, std::set<BasicBlock*>& unlikelyBlocks, CallInst* alloc) {
+    BasicBlock* blockForOptimization = nullptr;
+    //if (weightedT == nullptr or alloc == nullptr) {
+    //    return nullptr;
+    //}
+
+    //std::vector<BasicBlock*> unlikelyBlocks = findUnlikelyBlocks(weightedT);
+    //if (unlikelyBlocks.size() == 0) {
+    //    return nullptr;
+    //}
+
+    DominatorTree domTree(*func);
+    //std::vector<BasicBlock*> usersOfAlloc;
+    Instruction* inst = nullptr;
+    for (const auto& user : alloc->users()) {
+        auto* currentInst = dyn_cast<Instruction>(user);
+        //Instruction* currentInst = instNotPhi(user);
+        //if (not currentInst) {
+        //    continue;
+        //}
+
+        //BasicBlock* parent = inst->getParent();
+        //usersOfAlloc.push_back(parent);
+        if (inst == nullptr) {
+            inst = currentInst;
+        }
+        Instruction* dominatingInst = domTree.findNearestCommonDominator(currentInst, inst);
+        //errs() << *dominatingInst;
+        inst = dominatingInst;
+        BasicBlock* parent = inst->getParent();
+
+
+
+
+
+        //bool isDominatedByUnlikelyBlock = dominatedByUnlikelyBlock(func, unlikelyBlocks, inst);
+        //if (isDominatedByUnlikelyBlock and (not blockForOptimization
+        //                or blockForOptimization == parent)) {
+        //    blockForOptimization = parent;
+        //} else {
+        //    return nullptr;
+        //}
+    }
+    bool phiNode = isa<PHINode>(inst);
+    if (not inst or phiNode) {
+        return nullptr;
+    }
+    BasicBlock* parent = inst->getParent();
+    bool isDominatedByUnlikelyBlock = dominatedByUnlikelyBlock(func, unlikelyBlocks, inst);
+    if (isDominatedByUnlikelyBlock and (not blockForOptimization
+                    or blockForOptimization == parent)) {
+        blockForOptimization = parent;
+    } else {
+        return nullptr;
+    }
+
+
+    return blockForOptimization;
+}
+
+
+//BasicBlock* leastCommonAncestor(const std::vector<BasicBlock*> usersOfAlloc) {
+//    if (usersOfAlloc.size() < 1) {
+//        return nullptr;
+//    }
+//    DominatorTree domTree(*usersOfAlloc[0]->getParent());
+//
+//    for (size_t i = 0; i < usersOfAlloc.size() - 1; ++i) {
+//        domTree.findNearestCommonDominator(usersOfAlloc)
+//    }
+//
+//}
+
+
 
 } // namespace memopt

@@ -1,5 +1,5 @@
-; ModuleID = './IR/bb.ll'
-source_filename = "./IR/bb.ll"
+; ModuleID = './tests/IR/bb.ll'
+source_filename = "./tests/IR/bb.ll"
 
 define ptr @foo(i32 %x, i32 %y) {
 entry:

@@ -1,33 +1,33 @@
-; ModuleID = './IR/bb-five.ll'
+; ModuleID = './tests/IR/bb-five.ll'
 source_filename = "bb-five.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
 ; Function Attrs: nounwind sspstrong uwtable
 define dso_local i32 @foo(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
-  %3 = tail call noalias dereferenceable_or_null(1024) ptr @malloc(i64 noundef 1024) #3
-  %4 = icmp eq i32 %0, 42
-  br i1 %4, label %5, label %13, !prof !5
+  %3 = icmp eq i32 %0, 42
+  br i1 %3, label %4, label %13, !prof !5
 
-5:                                                ; preds = %2
+4:                                                ; preds = %2
+  %5 = tail call noalias dereferenceable_or_null(1024) ptr @malloc(i64 noundef 1024) #3
   %6 = and i32 %1, 1
   %7 = icmp eq i32 %6, 0
   br i1 %7, label %8, label %12
 
-8:                                                ; preds = %5
+8:                                                ; preds = %4
   %9 = icmp eq i32 %1, 8
   br i1 %9, label %10, label %11, !prof !5
 
 10:                                               ; preds = %8
-  tail call void @bar(ptr noundef %3) #4
+  tail call void @bar(ptr noundef %5) #4
   br label %14
 
 11:                                               ; preds = %8
   tail call void (...) @foo_bar() #4
   br label %14
 
-12:                                               ; preds = %5
-  tail call void @bar(ptr noundef %3) #4
+12:                                               ; preds = %4
+  tail call void @bar(ptr noundef %5) #4
   br label %14
 
 13:                                               ; preds = %2
